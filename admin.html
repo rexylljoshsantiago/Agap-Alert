@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel | AgapAlert</title>
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/admin.css">
+  <script>
+    (function(){
+      var t = localStorage.getItem('agapalert_theme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<div class="admin-wrap">
+
+  <header class="admin-bar">
+    <div class="brand">
+      <img src="assets/img/logo.png" alt="">
+      AgapAlert <span style="font-weight:400;color:var(--mute);margin-left:0.4rem">/ Admin</span>
+    </div>
+    <div class="admin-bar-right">
+      <span id="admin-name" class="bar-name"></span>
+
+      <button id="theme-btn" class="admin-bar-btn" aria-label="Toggle light/dark mode">
+        <svg id="theme-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
+      <div style="position:relative">
+        <button id="settings-btn" class="admin-bar-btn" aria-label="Settings" aria-expanded="false" aria-haspopup="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+        <div id="settings-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:155px;background:var(--s1);border:1px solid var(--line2);border-radius:var(--r-s);overflow:hidden;box-shadow:var(--sh-md);z-index:200">
+          <a href="profile.html" class="admin-dropdown-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Profile
+          </a>
+          <a href="index.html" class="admin-dropdown-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Dashboard
+          </a>
+          <button id="signout-btn" class="admin-dropdown-item admin-dropdown-item-danger">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+
+    <a href="index.html" class="admin-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to dashboard
+    </a>
+
+    <div>
+      <h1 style="font-size:24px;margin:0 0 0.25rem;color:var(--ink);font-weight:700">Administrator panel</h1>
+      <p style="color:var(--mute);margin:0;font-size:14px">Manage officials, invite codes and user accounts.</p>
+    </div>
+
+    <div class="admin-tabs" id="admin-tabs">
+      <button class="admin-tab active" data-tab="pending">
+        Pending requests <span class="tab-badge" id="tab-pending-count"></span>
+      </button>
+      <button class="admin-tab" data-tab="codes">Invite codes</button>
+      <button class="admin-tab" data-tab="officials">Barangay officials</button>
+    </div>
+
+    <!-- Pending requests -->
+    <div class="tab-panel" id="panel-pending">
+      <div class="admin-section">
+        <div class="admin-section-head">
+          <div>
+            <h2>Pending official requests</h2>
+            <p>Accounts that used an invite code and are awaiting approval.</p>
+          </div>
+          <span class="badge badge-pending" id="pending-count">0 pending</span>
+        </div>
+        <div id="pending-list"></div>
+      </div>
+    </div>
+
+    <!-- Invite codes -->
+    <div class="tab-panel" id="panel-codes" style="display:none">
+      <div class="admin-section">
+        <div class="admin-section-head">
+          <div>
+            <h2>Invite codes</h2>
+            <p>Each code is single-use. Share directly with the official via SMS or email.</p>
+          </div>
+        </div>
+        <div class="gen-form">
+          <div style="flex:1;min-width:180px">
+            <label class="gen-label" for="gen-note">
+              Note <span style="text-transform:none;font-weight:400;letter-spacing:0;font-size:11.5px;color:var(--dim)">(optional — e.g. name or barangay)</span>
+            </label>
+            <input class="gen-input" id="gen-note" type="text" placeholder="e.g. Juan dela Cruz, Brgy. Dalongue">
+          </div>
+          <button class="gen-btn" id="gen-btn">Generate code</button>
+        </div>
+        <table class="code-table">
+          <thead>
+            <tr>
+              <th>Code</th><th>Note</th><th>Created</th><th>Status</th><th>Used by</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="code-tbody"></tbody>
+        </table>
+        <div id="code-empty" class="empty" style="display:none">No invite codes yet. Generate one above.</div>
+      </div>
+    </div>
+
+    <!-- Barangay officials -->
+    <div class="tab-panel" id="panel-officials" style="display:none">
+      <div class="admin-section">
+        <div class="admin-section-head">
+          <div>
+            <h2>Barangay officials</h2>
+            <p>All accounts with approved official access.</p>
+          </div>
+          <span class="badge badge-active" id="officials-count">0 officials</span>
+        </div>
+        <div id="officials-list"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast-bar" id="toast"></div>
+
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

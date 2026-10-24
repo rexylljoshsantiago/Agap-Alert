@@ -1,14 +1,2 @@
 Options -Indexes
 DirectoryIndex index.html index.php
-
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /agapalert/
-
-    # Allow direct access to existing files and directories
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-
-    # Route API requests
-    RewriteRule ^api/(.*)$ api/$1 [L]
-</IfModule>

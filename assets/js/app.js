@@ -93,8 +93,58 @@
 
   var LOGO = 'assets/img/logo.png';
 
-  /* ── Copy strings (FIL) ─────────────────────────────────────────────────── */
+  /* ── Copy strings (EN / FIL) ─────────────────────────────────────────────── */
   var D = {
+    en: {
+      map: 'Live map', sh: 'Shelters', rp: 'Reports', inc: 'Incidents',
+      hot: 'Hotlines', sos: 'Request rescue', pubb: 'Publish advisory',
+      goNow: 'Go now', near: 'Nearest shelter', walk: 'min on foot',
+      left: 'places left', route: 'Show route', shown: 'Route shown',
+      close: 'Close', river: 'River level at Dalongue gauge', todo: 'What to do',
+      wind: 'Wind', rain: 'Rain', space: 'Shelter space',
+      upd: 'Updated', saved: 'Saved',
+      hrs: '24 hours ago', now: 'Now', fc: '+6 h',
+      stead: 'No rise expected in the next 6 hours.',
+      above: 'Above the Critical line of 8.0 m.',
+      reach: 'At this rate it reaches {m} m in {t}.',
+      h1: 'about an hour', hn: 'about {n} hours',
+      nofc: 'Forecast unavailable while offline.',
+      off1: 'No connection.',
+      off2: 'Showing saved information. Numbers may be out of date.',
+      offb: 'Send SOS by SMS',
+      l_flood: 'Flood zone', l_sh: 'Shelters', l_inc: 'Incidents',
+      callTxt: 'Call', issuer: 'MDRRMO Santa Barbara', alarm: 'Alarm',
+      lv: ['Normal', 'Watch', 'Warning', 'Critical'],
+      ti: [
+        'Conditions normal',
+        'Monitor flood conditions',
+        'Preparatory evacuation advised',
+        'Forced evacuation in effect'
+      ],
+      td: [
+        [
+          'Keep your phone charged and alerts on.',
+          'Know which shelter is nearest to your home.',
+          'Check this page again if heavy rain starts.'
+        ],
+        [
+          'Pack your go-bag: water, food, medicines, documents.',
+          'Agree a meeting place with your family.',
+          'Be ready to leave if the level reaches 6.0 m.'
+        ],
+        [
+          'Leave low-lying and riverside homes now.',
+          'Take your go-bag, IDs and medicines.',
+          'Walk to Dalongue Barangay Evacuation Hall, 0.4 km away.'
+        ],
+        [
+          'Leave now and avoid flooded roads.',
+          'Go to the nearest high-ground shelter.',
+          'If you cannot leave, call the MDRRMO on (075) 518-2024.'
+        ]
+      ]
+    },
+
     fil: {
       map: 'Mapa', sh: 'Likasan', rp: 'Mga ulat', inc: 'Mga insidente',
       hot: 'Hotline', sos: 'Humingi ng saklolo', pubb: 'Maglabas ng abiso',
@@ -221,6 +271,7 @@
     role:  _isOfficial ? 'off' : 'res',
     tab:   'radar',
     net:   1,
+    lang:  'fil',
     open:  null,
     more:  false,
     fl:    1,
@@ -237,11 +288,13 @@
   function T(k) {
     // These four keys use the current time rather than a hardcoded value
     var t = nowHHMM();
-    if (k === 'upd')    return 'Na-update ' + t;
-    if (k === 'saved')  return 'Na-save ' + t;
+    if (k === 'upd')    return (S.lang === 'fil' ? 'Na-update ' : 'Updated ') + t;
+    if (k === 'saved')  return (S.lang === 'fil' ? 'Na-save '   : 'Saved ')   + t;
     if (k === 'issuer') return 'MDRRMO Santa Barbara, ' + t;
-    if (k === 'off2')   return 'Ipinapakita ang impormasyong na-save noong ' + t + '. Maaaring luma na ang mga numero.';
-    return D.fil[k] != null ? D.fil[k] : k;
+    if (k === 'off2')   return S.lang === 'fil'
+      ? 'Ipinapakita ang impormasyong na-save noong ' + t + '. Maaaring luma na ang mga numero.'
+      : 'Showing information saved at ' + t + '. Numbers may be out of date.';
+    return D[S.lang] && D[S.lang][k] != null ? D[S.lang][k] : D.en[k];
   }
 
   function toast(msg) {
@@ -775,7 +828,12 @@
       var led = document.getElementById('reports-led');
       if (led) { _renderReportRows(led); _renderLoadMore(); }
     }
-    document.documentElement.lang = 'fil';
+    document.documentElement.lang = S.lang === 'fil' ? 'fil' : 'en';
+
+    // Sync language toggle pressed state
+    document.querySelectorAll('#lg button').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.v === S.lang));
+    });
 
     window.scrollTo(0, scrollY);
   }
@@ -1217,6 +1275,15 @@
   themeBtn.addEventListener('click', function () {
     applyTheme(root.getAttribute('data-theme') !== 'dark');
   });
+
+  // Language segmented control
+  var _lgEl = document.getElementById('lg');
+  if (_lgEl) {
+    _lgEl.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (b && b.dataset.v) { S.lang = b.dataset.v; render(); }
+    });
+  }
 
   /* ── Geolocation ─────────────────────────────────────────────────────────── */
   var _userLat = null;

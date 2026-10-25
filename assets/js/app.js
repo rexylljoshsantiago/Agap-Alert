@@ -267,20 +267,22 @@
 
   /* ── App state ───────────────────────────────────────────────────────────── */
   var S = {
-    lv:    2,
-    role:  _isOfficial ? 'off' : 'res',
-    tab:   'radar',
-    net:   1,
-    lang:  'en',
-    sel:   null,
-    route: null,
-    open:  null,
-    more:  false,
-    z:     1,
-    fl:    1,
-    inc:   1,
-    pubLv: 2,
-    pubC:  0,
+    lv:      2,
+    role:    _isOfficial ? 'off' : 'res',
+    tab:     'radar',
+    net:     1,
+    lang:    'en',
+    sel:     null,
+    route:   null,
+    open:    null,
+    more:    false,
+    z:       1,
+    fl:      1,
+    inc:     1,
+    pubLv:   2,
+    pubC:    0,
+    userLat: null,   // real GPS latitude  (null = not yet granted)
+    userLon: null,   // real GPS longitude
     reps: [
       {
         t: '3 families stranded near Sinocalan River dike',
@@ -446,120 +448,157 @@
     s.addEventListener('pointerleave', lv);
   }
 
-  /* ── Map ─────────────────────────────────────────────────────────────────── */
+  /* ── Leaflet map ─────────────────────────────────────────────────────────── */
+  var _leafMap      = null;   // Leaflet map instance
+  var _userMarker   = null;   // blue dot marker
+  var _shelterMarkers = [];   // evacuation center markers
+  var _floodLayer   = null;   // flood polygon layer
+  var _incidentMarkers = [];  // incident markers (officials only)
+
+  // Real-world coordinates for evacuation centers (Dalongue area)
+  var CT_COORDS = [
+    [15.9640, 120.4140],  // Dalongue Barangay Evacuation Hall
+    [15.9610, 120.4110],  // Santa Barbara Multi-Purpose Gymnasium
+    [15.9700, 120.4200],  // Tuliao Disaster Evacuation Center
+    [15.9590, 120.4220]   // Minien National High School Shelter
+  ];
+
+  // Approximate flood zone polygon around Sinocalan River (Dalongue)
+  var FLOOD_ZONE = [
+    [15.9680, 120.4100], [15.9690, 120.4150], [15.9670, 120.4190],
+    [15.9650, 120.4210], [15.9620, 120.4200], [15.9600, 120.4170],
+    [15.9610, 120.4130], [15.9630, 120.4110]
+  ];
+
+  function floodColor() {
+    return S.lv === 0 ? '#3b82f6'
+         : S.lv === 1 ? '#f59e0b'
+         : S.lv === 2 ? '#f97316'
+         :               '#ef4444';
+  }
+
+  function initMap() {
+    // Map container must exist in the DOM
+    var el = document.getElementById('leaflet-map');
+    if (!el || _leafMap) return;
+
+    _leafMap = L.map('leaflet-map', {
+      center:    [15.9650, 120.4150],
+      zoom:      15,
+      zoomControl: false   // we use our own buttons
+    });
+
+    // OpenStreetMap tiles — free, no key needed
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(_leafMap);
+
+    // Flood zone polygon
+    _updateFloodLayer();
+
+    // Evacuation center markers
+    _updateShelterMarkers();
+
+    // If we already have user location, add the dot
+    if (S.userLat !== null) _updateUserMarker();
+
+    // Incident markers (officials)
+    if (off()) _updateIncidentMarkers();
+  }
+
+  function _updateFloodLayer() {
+    if (!_leafMap) return;
+    if (_floodLayer) { _leafMap.removeLayer(_floodLayer); _floodLayer = null; }
+    if (!S.fl || S.lv === 0) return;
+    var c = floodColor();
+    _floodLayer = L.polygon(FLOOD_ZONE, {
+      color:       c,
+      fillColor:   c,
+      fillOpacity: 0.25,
+      weight:      2,
+      dashArray:   '6 4'
+    }).addTo(_leafMap);
+    _floodLayer.bindTooltip('Flood zone – Sinocalan River', { sticky: true });
+  }
+
+  function _updateShelterMarkers() {
+    if (!_leafMap) return;
+    _shelterMarkers.forEach(function (m) { _leafMap.removeLayer(m); });
+    _shelterMarkers = [];
+
+    var shelterIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:28px;height:28px;border-radius:50%;background:var(--ac,#2563eb);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">S</div>',
+      iconSize:   [28, 28],
+      iconAnchor: [14, 14]
+    });
+
+    CT.forEach(function (c, i) {
+      var coords = CT_COORDS[i];
+      var cap    = c.c - c.o;
+      var pct    = Math.round(c.o / c.c * 100);
+      var m = L.marker(coords, { icon: shelterIcon })
+        .addTo(_leafMap)
+        .bindPopup(
+          '<b>' + (i + 1) + '. ' + c.n + '</b><br>' +
+          c.b + '<br>' +
+          c.k + ' km away · ' + walk(c) + ' min walk<br>' +
+          '<span style="color:' + (pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e') + '">' +
+          cap + ' places left (' + pct + '% full)</span>' +
+          (c.p ? '<br>📞 ' + c.p : '')
+        );
+      _shelterMarkers.push(m);
+    });
+  }
+
+  function _updateUserMarker() {
+    if (!_leafMap || S.userLat === null) return;
+    if (_userMarker) { _leafMap.removeLayer(_userMarker); }
+    var userIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 6px rgba(59,130,246,.25)"></div>',
+      iconSize:   [18, 18],
+      iconAnchor: [9, 9]
+    });
+    _userMarker = L.marker([S.userLat, S.userLon], { icon: userIcon, zIndexOffset: 1000 })
+      .addTo(_leafMap)
+      .bindPopup('<b>Your location</b>');
+  }
+
+  function _updateIncidentMarkers() {
+    if (!_leafMap) return;
+    _incidentMarkers.forEach(function (m) { _leafMap.removeLayer(m); });
+    _incidentMarkers = [];
+    if (!S.inc) return;
+
+    var incIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:16px;height:16px;background:#ef4444;transform:rotate(45deg);border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.4)"></div>',
+      iconSize:   [16, 16],
+      iconAnchor: [8, 8]
+    });
+
+    S.reps.filter(function (r) { return r.st < 3; }).forEach(function (r) {
+      // Approximate positions near the area (static demo data has no real coords)
+      var baseCoords = [15.9645 + (Math.random() - 0.5) * 0.005,
+                        120.4145 + (Math.random() - 0.5) * 0.005];
+      var m = L.marker(baseCoords, { icon: incIcon })
+        .addTo(_leafMap)
+        .bindPopup('<b>' + r.pr + ' priority</b><br>' + r.t + '<br><small>' + r.w + '</small>');
+      _incidentMarkers.push(m);
+    });
+  }
+
   function map() {
-    var L    = LVD[S.lv];
-    var sel  = S.sel  != null ? CT[S.sel]   : null;
-    var rt   = S.route != null ? CT[S.route] : null;
-    var z    = S.z;
-    var w    = 640 / z;
-    var h    = 420 / z;
-    var x0   = Math.min(Math.max(300 - w / 2, 0), 640 - w);
-    var y0   = Math.min(Math.max(232 - h / 2, 0), 420 - h);
-
-    var river = 'M-20 134C120 74 200 232 330 208S520 124 660 228';
-    var hzc   = hz();
-    var roads = 'M0 300H640M0 180H300M330 150L640 60M205 0V420M470 0V420';
-
-    var pins = CT.map(function (c, i) {
-      var a = S.sel === i;
-      var r = (a ? 15 : 12) / Math.sqrt(z);
-      return '<g class="pin" data-a="pin" data-v="' + i + '" tabindex="0" role="button" aria-label="' + c.n + ', ' + c.k + ' km">'
-        + '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r + '" fill="var(--ac)" stroke="var(--s1)" stroke-width="' + 3 / z + '"/>'
-        + '<text x="' + c.x + '" y="' + (c.y + 4 / z) + '" text-anchor="middle" font-size="' + 11 / z + '" font-weight="700" fill="var(--acon)">' + (i + 1) + '</text>'
-        + '</g>';
-    }).join('');
-
-    var inc = off() && S.inc
-      ? S.reps.filter(function (r) { return r.st < 3; }).map(function (r) {
-          var s = 6 / z;
-          return '<rect x="' + (r.x - s) + '" y="' + (r.y - s)
-            + '" width="' + 2 * s + '" height="' + 2 * s
-            + '" transform="rotate(45 ' + r.x + ' ' + r.y + ')"'
-            + ' fill="var(--rose)" stroke="var(--s1)" stroke-width="' + 2 / z + '"/>';
-        }).join('')
-      : '';
-
-    var path = rt
-      ? '<path d="M300 232Q' + ((300 + rt.x) / 2 + 14) + ' ' + ((232 + rt.y) / 2 - 10) + ' ' + rt.x + ' ' + rt.y
-          + '" fill="none" stroke="var(--ac)" stroke-width="' + 4 / z
-          + '" stroke-dasharray="' + 1 / z + ' ' + 8 / z + '" stroke-linecap="round"/>'
-      : '';
-
-    var lab = function (x, y, t, italic) {
-      return '<text x="' + x + '" y="' + y
-        + '" fill="var(--lab)" font-size="' + 13 / z + '" font-weight="500"'
-        + (italic ? ' font-style="italic"' : '')
-        + ' stroke="var(--land)" stroke-width="' + 4 / z + '" paint-order="stroke">' + t + '</text>';
-    };
-
-    var callout = sel
-      ? '<div class="call">'
-          + '<b>' + (S.sel + 1) + '. ' + sel.n + '</b>'
-          + '<span class="mute" style="font-size:13.5px">'
-              + sel.k + ' km, ' + walk(sel) + ' ' + T('walk') + ', ' + (sel.c - sel.o) + ' ' + T('left')
-          + '</span>'
-          + '<div class="r">'
-              + '<button class="btn s" data-a="route" data-v="' + S.sel + '">'
-                  + ic('nav') + (S.route === S.sel ? T('shown') : T('route'))
-              + '</button>'
-              + '<button class="btn s o" data-a="pin" data-v="' + S.sel + '">' + T('close') + '</button>'
-          + '</div>'
-        + '</div>'
-      : '';
-
-    return '<div class="map">'
-      + '<svg class="m" viewBox="' + x0 + ' ' + y0 + ' ' + w + ' ' + h + '"'
-          + ' preserveAspectRatio="xMidYMid slice"'
-          + ' role="img" aria-label="Map of Dalongue with river, flood zone and numbered evacuation centers">'
-      + '<defs>'
-          + '<pattern id="hz" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(40)">'
-              + '<line x1="0" y1="0" x2="0" y2="9" stroke="' + hzc + '" stroke-width="3"/>'
-          + '</pattern>'
-          + '<path id="rv" d="' + river + '"/>'
-      + '</defs>'
-      + '<g fill="none" stroke="var(--ctr)" stroke-width="1.2">'
-          + '<path d="M0 60C100 30 220 70 330 36S560 20 640 52"/>'
-          + '<path d="M0 86C110 60 230 98 340 66S560 54 640 84"/>'
-          + '<path d="M380 420C420 380 520 372 640 392"/>'
-          + '<path d="M0 396C60 370 120 380 170 420"/>'
-      + '</g>'
-      + '<text x="560" y="46" fill="var(--lab)" font-size="' + 10 / z + '" opacity=".8">20 m</text>'
-      + '<g fill="var(--blk)">'
-          + '<rect x="40" y="250" width="70" height="40"/><rect x="40" y="310" width="50" height="40"/>'
-          + '<rect x="225" y="318" width="60" height="44"/><rect x="330" y="250" width="70" height="46"/>'
-          + '<rect x="420" y="312" width="80" height="40"/><rect x="440" y="150" width="70" height="40"/>'
-          + '<rect x="540" y="160" width="60" height="60"/><rect x="60" y="120" width="80" height="40"/>'
-          + '<rect x="230" y="40" width="60" height="44"/><rect x="340" y="80" width="70" height="40"/>'
-      + '</g>'
-      + '<g stroke="var(--case)" stroke-width="9" fill="none"><path d="' + roads + '"/></g>'
-      + '<g stroke="var(--road)" stroke-width="6" fill="none"><path d="' + roads + '"/></g>'
-      + '<path d="M150 170L420 126L432 336L160 366Z" fill="none" stroke="var(--dim)"'
-          + ' stroke-width="' + 1.5 / z + '" stroke-dasharray="6 5" opacity=".7"/>'
-      + lab(158, 190, 'Brgy. Dalongue')
-      + (L.hz && S.fl
-          ? '<path d="' + river + '" fill="none" stroke="url(#hz)" stroke-width="' + (80 + L.hz * 120) + '" opacity=".22"/>'
-            + '<path d="' + river + '" fill="none" stroke="url(#hz)" stroke-width="' + (36 + L.hz * 70) + '" opacity=".6"/>'
-          : '')
-      + '<path d="' + river + '" fill="none" stroke="var(--water)" stroke-width="22" stroke-linecap="round"/>'
-      + '<text font-size="' + 12 / z + '" font-style="italic" fill="var(--lab)"'
-          + ' stroke="var(--water)" stroke-width="' + 3 / z + '" paint-order="stroke">'
-          + '<textPath href="#rv" startOffset="6%">Sinocalan River</textPath>'
-      + '</text>'
-      + lab(246, 320, 'Dalongue')
-      + lab(88,  372, 'Poblacion Sur')
-      + lab(468, 78,  'Tuliao')
-      + lab(500, 372, 'Minien')
-      + path + inc + pins
-      + '<circle cx="300" cy="232" r="' + 22 / z + '" fill="var(--blu)" opacity=".16"/>'
-      + '<circle cx="300" cy="232" r="' + 7 / z + '" fill="var(--blu)" stroke="#fff" stroke-width="' + 3 / z + '"/>'
-      + '</svg>'
-      + '<span class="tag mono' + (S.net ? '' : ' old') + '">'
+    return '<div class="map" style="position:relative">'
+      + '<div id="leaflet-map" style="width:100%;height:420px;border-radius:12px;z-index:0"></div>'
+      + '<span class="tag mono' + (S.net ? '' : ' old') + '" style="position:absolute;bottom:8px;left:8px;z-index:1000">'
           + (S.net ? T('upd') : T('saved'))
       + '</span>'
-      + '<div class="lyr">'
+      + '<div class="lyr" style="position:absolute;top:8px;left:8px;z-index:1000">'
           + '<button data-a="lfl" aria-pressed="' + (S.fl ? 'true' : 'false') + '">'
-              + '<i style="background:repeating-linear-gradient(45deg,' + hzc + ' 0 2px,transparent 2px 4px)"></i>'
+              + '<i style="background:' + floodColor() + ';opacity:.7"></i>'
               + T('l_flood')
           + '</button>'
           + (off()
@@ -569,14 +608,28 @@
                 + '</button>'
               : '')
       + '</div>'
-      + '<div class="scale"><span>' + Math.round(200 / z) + ' m</span><i style="width:' + Math.round(58) + 'px"></i></div>'
-      + '<div class="zm">'
-          + '<button data-a="zin"  aria-label="Zoom in">' + ic('plus') + '</button>'
+      + '<div class="zm" style="position:absolute;top:8px;right:8px;z-index:1000">'
+          + '<button data-a="zin"  aria-label="Zoom in">'  + ic('plus')  + '</button>'
           + '<button data-a="zout" aria-label="Zoom out">' + ic('minus') + '</button>'
           + '<button data-a="zr"   aria-label="Center on my location">' + ic('loc') + '</button>'
       + '</div>'
-      + callout
       + '</div>';
+  }
+
+  // Called after map() HTML is injected into the DOM
+  function initMapAfterRender() {
+    if (S.tab !== 'radar') return;
+    // Small delay so the div is fully painted before Leaflet measures it
+    setTimeout(function () {
+      if (!_leafMap) {
+        initMap();
+      } else {
+        // Map already exists — just invalidate size and update layers
+        _leafMap.invalidateSize();
+        _updateFloodLayer();
+        if (off()) _updateIncidentMarkers();
+      }
+    }, 50);
   }
 
   /* ── Capacity bar ────────────────────────────────────────────────────────── */
@@ -826,7 +879,7 @@
     $('#pg').innerHTML = views[S.tab]();
     netbar();
     nav();
-    if (S.tab === 'radar') { bindHydro(); updateWeatherUI(); }
+    if (S.tab === 'radar') { initMapAfterRender(); bindHydro(); updateWeatherUI(); }
     document.documentElement.lang = S.lang === 'fil' ? 'fil' : 'en';
 
     // Sync language toggle pressed state
@@ -996,11 +1049,11 @@
     open:  function (v)     { S.open = S.open === v ? null : v; render(); },
     more:  function ()      { S.more = !S.more; render(); },
     adv:   function (v)     { var r = S.reps[v]; if (r.st < 3) r.st++; render(); },
-    zin:   function ()      { S.z = Math.min(2.4, S.z * 1.6); render(); },
-    zout:  function ()      { S.z = Math.max(1, S.z / 1.6); render(); },
-    zr:    function ()      { S.z = 1; render(); },
-    lfl:   function ()      { S.fl  = !S.fl;  render(); },
-    linc:  function ()      { S.inc = !S.inc; render(); },
+    zin:   function ()      { if (_leafMap) _leafMap.zoomIn();  },
+    zout:  function ()      { if (_leafMap) _leafMap.zoomOut(); },
+    zr:    function ()      { requestLocation(); if (_leafMap && S.userLat !== null) { _leafMap.setView([S.userLat, S.userLon], 16); } else if (_leafMap) { _leafMap.setView([15.9650, 120.4150], 15); } },
+    lfl:   function ()      { S.fl  = !S.fl;  _updateFloodLayer(); var b = document.querySelector('[data-a="lfl"]'); if(b) b.setAttribute('aria-pressed', String(S.fl)); },
+    linc:  function ()      { S.inc = !S.inc; if(off()) _updateIncidentMarkers(); var b = document.querySelector('[data-a="linc"]'); if(b) b.setAttribute('aria-pressed', String(S.inc)); },
     toast: function (v)     { toast(v); },
     sos:   sosForm,
     rep:   repForm,
@@ -1107,6 +1160,27 @@
     applyTheme(root.getAttribute('data-theme') !== 'dark');
   });
 
+  /* ── Geolocation ─────────────────────────────────────────────────────────── */  function requestLocation() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        S.userLat = pos.coords.latitude;
+        S.userLon = pos.coords.longitude;
+        S.userSVG = null; // no longer used
+        // Update Leaflet map
+        if (_leafMap) {
+          _leafMap.setView([S.userLat, S.userLon], 16);
+          _updateUserMarker();
+        }
+        // Re-fetch weather using user's actual position
+        fetchWeather();
+        toast('Location found — map updated to your position.');
+      },
+      function () { /* denied or unavailable — stay at default */ },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
   /* ── Weather fetch ───────────────────────────────────────────────────────── */
   // Dalongue, Santa Barbara, Pangasinan coordinates
   var WEATHER_LAT   = 15.9667;
@@ -1117,8 +1191,10 @@
   var W = null;
 
   function fetchWeather() {
-    var url = 'api/weather.php?lat=' + WEATHER_LAT
-            + '&lon=' + WEATHER_LON
+    var lat = S.userLat !== null ? S.userLat : WEATHER_LAT;
+    var lon = S.userLon !== null ? S.userLon : WEATHER_LON;
+    var url = 'api/weather.php?lat=' + lat
+            + '&lon=' + lon
             + '&barangay_id=' + WEATHER_BRGID;
 
     fetch(url, { credentials: 'same-origin' })
@@ -1149,6 +1225,9 @@
 
   /* ── Initial render ──────────────────────────────────────────────────────── */
   render();
+
+  // Request user location — browser will prompt allow/deny
+  requestLocation();
 
   // Fetch live weather on load, then refresh every 10 minutes
   fetchWeather();

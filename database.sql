@@ -88,3 +88,27 @@ CREATE TABLE reports (
     FOREIGN KEY (user_id)     REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (barangay_id) REFERENCES barangays(id) ON DELETE SET NULL
 );
+
+CREATE TABLE flood_levels (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    level         TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '0=Normal 1=Watch 2=Warning 3=Critical',
+    river_meters  DECIMAL(5,2)     NOT NULL DEFAULT 0,
+    wind_kmh      DECIMAL(5,1)     NOT NULL DEFAULT 0,
+    rain_mmh      DECIMAL(5,1)     NOT NULL DEFAULT 0,
+    notes         VARCHAR(255)     NULL,
+    set_by        INT UNSIGNED     NULL,
+    created_at    TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (set_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Seed default flood level (Normal)
+INSERT INTO flood_levels (level, river_meters, wind_kmh, rain_mmh, notes)
+VALUES (0, 3.20, 12, 0.5, 'Initial baseline reading');
+
+-- Seed shelter data
+INSERT INTO shelters (name, barangay_id, capacity, occupancy, contact) VALUES
+    ('Dalongue Barangay Evacuation Hall',      1, 180, 0,   '(075) 518-2024'),
+    ('Santa Barbara Multi-Purpose Gymnasium',  2, 350, 0,   '0917-508-1122'),
+    ('Tuliao Disaster Evacuation Center',      3, 220, 0,   NULL),
+    ('Minien National High School Shelter',    NULL, 200, 0, NULL);

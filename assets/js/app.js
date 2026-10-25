@@ -1027,7 +1027,28 @@
     pin:   function (v)     { S.sel = S.sel == +v ? null : +v; render(); },
     open:  function (v)     { S.open = S.open === v ? null : v; render(); },
     more:  function ()      { S.more = !S.more; render(); },
-    adv:   function (v)     { var r = S.reps[v]; if (r.st < 3) r.st++; render(); },
+    adv:   function (v) {
+      var r = S.reps[v];
+      if (!r || r.st >= 3) return;
+      var statusMap = ['acknowledged', 'dispatched', 'resolved'];
+      var newStatus = statusMap[r.st];
+      if (r.id) {
+        fetch('api/reports.php', {
+          method: 'PATCH',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: r.id, status: newStatus })
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.ok) { r.st++; render(); }
+            else toast('Hindi na-update ang status.');
+          })
+          .catch(function () { r.st++; render(); }); // optimistic fallback
+      } else {
+        r.st++; render();
+      }
+    },
     zin:   function ()      { if (_leafMap) _leafMap.zoomIn(); },
     zout:  function ()      { if (_leafMap) _leafMap.zoomOut(); },
     zr:    function ()      { if (_userLat !== null && _leafMap) { _leafMap.setView([_userLat, _userLon], 16); } else { requestLocation(); if (_leafMap) _leafMap.setView(MAP_CENTER, MAP_ZOOM); } },
@@ -1072,10 +1093,22 @@
       el.setAttribute('aria-pressed', 'true');
     },
     rsend: function () {
-      A.close();
-      toast(S.net
-        ? 'Report sent. Your barangay can now see it.'
-        : 'Report saved. It will send when signal returns.');
+      var input = document.querySelector('#dlg .fi');
+      var title = input ? input.value.trim() : '';
+      if (!title) { toast('Ilarawan ang insidente.'); return; }
+      fetch('api/reports.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, is_sos: 0 })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          A.close();
+          toast(data.message || (S.net ? 'Ulat naipadala.' : 'Nai-save. Ipapadala kapag may signal.'));
+          if (data.ok) fetchReports();
+        })
+        .catch(function () { A.close(); toast('Ulat nai-save. Ipapadala kapag may signal.'); });
     },
     safe: function () {
       A.close();
@@ -1211,7 +1244,99 @@
   }
 
   /* ── Initial render ──────────────────────────────────────────────────────── */
+  /* ── Live data fetch ─────────────────────────────────────────────────────── */
+
+  function fetchFloodLevel() {
+    fetch('api/flood.php', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok || !data.flood) return;
+        var f = data.flood;
+        var lv = Math.min(3, Math.max(0, parseInt(f.level) || 0));
+        var changed = S.lv !== lv;
+        S.lv = lv;
+        // Update static LVD with real readings so the hydrograph stays accurate
+        if (f.river_meters) LVD[lv].m = parseFloat(f.river_meters);
+        if (f.wind_kmh)     LVD[lv].w = parseFloat(f.wind_kmh);
+        if (f.rain_mmh)     LVD[lv].r = parseFloat(f.rain_mmh);
+        if (changed && S.tab === 'radar') render();
+        else if (S.tab === 'radar') {
+          // Re-render just the band without full page re-render
+          if (document.getElementById('band')) band();
+        }
+      })
+      .catch(function () {});
+  }
+
+  function fetchShelters() {
+    fetch('api/shelters.php', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok || !data.shelters || !data.shelters.length) return;
+        // Map DB shelters onto the CT array in order
+        data.shelters.forEach(function (s, i) {
+          if (!CT[i]) return;
+          CT[i].c = parseInt(s.capacity)  || CT[i].c;
+          CT[i].o = parseInt(s.occupancy) || 0;
+          if (s.contact) CT[i].p = s.contact;
+        });
+        // Refresh shelter space in the facts bar if on radar tab
+        if (S.tab === 'radar') {
+          var sp = CT.reduce(function (a, x) { return a + x.c - x.o; }, 0);
+          var factsEls = document.querySelectorAll('.facts > div');
+          if (factsEls[2]) factsEls[2].innerHTML = T('space') + '<b>' + sp + '</b>';
+        }
+      })
+      .catch(function () {});
+  }
+
+  function fetchReports() {
+    fetch('api/reports.php', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok || !data.reports) return;
+        // Map DB rows into the S.reps format
+        S.reps = data.reports.map(function (r) {
+          var stMap = { 'new': 0, 'acknowledged': 1, 'dispatched': 2, 'resolved': 3 };
+          return {
+            id: r.id,
+            t:  r.title,
+            w:  r.location || r.barangay_name || 'Santa Barbara, Pangasinan',
+            h:  timeAgo(r.created_at),
+            st: stMap[r.status] !== undefined ? stMap[r.status] : 0,
+            pr: r.is_sos ? 'Critical' : 'High',
+            tr: 1,
+            dt: r.description || '',
+            sos: r.is_sos ? 1 : 0
+          };
+        });
+        // Refresh nav badge count
+        nav();
+      })
+      .catch(function () {});
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return '';
+    var diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (diff < 60)  return diff + ' segundo';
+    if (diff < 3600) return Math.floor(diff / 60) + ' min';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' oras';
+    return Math.floor(diff / 86400) + ' araw';
+  }
+
+  /* ── Initial render ──────────────────────────────────────────────────────── */
   render();
+
+  // Fetch live data on load
+  fetchFloodLevel();
+  fetchShelters();
+  fetchReports();
+
+  // Refresh flood level every 2 minutes, shelters/reports every 5 minutes
+  setInterval(fetchFloodLevel, 2 * 60 * 1000);
+  setInterval(fetchShelters,   5 * 60 * 1000);
+  setInterval(fetchReports,    5 * 60 * 1000);
 
   // Fetch live weather on load, then refresh every 10 minutes
   fetchWeather();

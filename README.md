@@ -87,6 +87,18 @@ agapalert/
 | `api/admin/officials.php` | GET/POST | Mga opisyal |
 | `api/admin/shelters.php` | GET/PATCH | Occupancy ng likasan |
 
+## SMS abiso (opsyonal)
+
+1. Gumawa ng account sa [Semaphore](https://semaphore.co) at kumuha ng API key.
+2. I-edit ang `config/sms.php`: itakda ang `enabled` sa `true` at ilagay ang `api_key`.
+3. Siguraduhing may valid na mobile number ang mga residente sa profile (09… format).
+
+Kapag naglabas ng abiso ang opisyal o nag-update ang admin ng antas ≥ 1, papadalhan ng SMS ang lahat ng rehistradong numero sa **Barangay Dalongue**.
+
+## Lumang database
+
+Kung naka-setup na ang proyekto bago ang Dalongue-only update, i-run ang `database/migrate_dalongue_only.sql` sa phpMyAdmin.
+
 ---
 
 *AgapAlert — Dalongue, Santa Barbara, Pangasinan*

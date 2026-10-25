@@ -9,9 +9,7 @@ CREATE TABLE barangays (
 );
 
 INSERT INTO barangays (name, city) VALUES
-    ('Dalongue',       'Santa Barbara'),
-    ('Poblacion Sur',  'Santa Barbara'),
-    ('Tuliao',         'Santa Barbara');
+    ('Dalongue', 'Santa Barbara');
 
 CREATE TABLE users (
     id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -96,6 +94,8 @@ CREATE TABLE flood_levels (
     wind_kmh      DECIMAL(5,1)     NOT NULL DEFAULT 0,
     rain_mmh      DECIMAL(5,1)     NOT NULL DEFAULT 0,
     notes         VARCHAR(255)     NULL,
+    sms_sent      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    sms_failed    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     set_by        INT UNSIGNED     NULL,
     created_at    TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -108,10 +108,7 @@ VALUES (0, 3.20, 12, 0.5, 'Initial baseline reading');
 
 -- Seed shelter data
 INSERT INTO shelters (name, barangay_id, capacity, occupancy, contact) VALUES
-    ('Dalongue Barangay Evacuation Hall',      1, 180, 0,   '(075) 518-2024'),
-    ('Santa Barbara Multi-Purpose Gymnasium',  2, 350, 0,   '0917-508-1122'),
-    ('Tuliao Disaster Evacuation Center',      3, 220, 0,   NULL),
-    ('Minien National High School Shelter',    NULL, 200, 0, NULL);
+    ('Dalongue Barangay Evacuation Hall', 1, 180, 0, '(075) 518-2024');
 
 CREATE TABLE login_attempts (
     id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

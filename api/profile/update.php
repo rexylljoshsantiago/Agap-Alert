@@ -14,7 +14,7 @@ $db   = db();
 $full_name   = trim($body['full_name']    ?? '');
 $phone       = trim($body['phone_number'] ?? '');
 $email       = strtolower(trim($body['email'] ?? ''));
-$barangay_id = isset($body['barangay_id']) ? (int) $body['barangay_id'] : 0;
+$barangay_id = 1;
 
 $errors = [];
 
@@ -27,8 +27,6 @@ if (!empty($phone) && !preg_match('/^[0-9+()\-\s]{7,40}$/', $phone))
 if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL))
     $errors['email'] = 'Email address looks invalid.';
 
-if ($barangay_id < 1)
-    $errors['barangay_id'] = 'Select your barangay.';
 
 // Check email uniqueness (exclude current user)
 if (!empty($email)) {

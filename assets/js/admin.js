@@ -22,6 +22,40 @@
 
   document.getElementById('admin-name').textContent = user.full_name;
 
+  /* ── Main navbar (same as dashboard) ─────────────────────────────────────── */
+  var MAIN_NAV = [
+    { tab: 'radar',    label: 'Live map',    href: 'index.html?tab=radar' },
+    { tab: 'centers',  label: 'Shelters',    href: 'index.html?tab=centers' },
+    { tab: 'reports',  label: 'Reports',     href: 'index.html?tab=reports' },
+    { tab: 'hotlines', label: 'Hotlines',    href: 'index.html?tab=hotlines' },
+    { tab: 'admin',    label: 'Admin panel', href: 'admin.html' }
+  ];
+
+  function renderMainNav() {
+    var tabsEl = document.getElementById('main-tabs');
+    var bnEl   = document.getElementById('bn');
+    if (!tabsEl) return;
+
+    tabsEl.innerHTML = MAIN_NAV.map(function (item) {
+      if (item.tab === 'admin') {
+        return '<button type="button" aria-current="page">' + item.label + '</button>';
+      }
+      return '<a href="' + item.href + '">' + item.label + '</a>';
+    }).join('');
+
+    if (bnEl) {
+      bnEl.innerHTML = MAIN_NAV.map(function (item) {
+        var cur = item.tab === 'admin' ? ' aria-current="page"' : '';
+        if (item.tab === 'admin') {
+          return '<button type="button"' + cur + '>' + item.label + '</button>';
+        }
+        return '<button type="button"' + cur + ' onclick="location.href=\'' + item.href + '\'">' + item.label + '</button>';
+      }).join('');
+    }
+  }
+
+  renderMainNav();
+
   /* ── Sign out ────────────────────────────────────────────────────────────── */
   document.getElementById('signout-btn').addEventListener('click', function () {
     fetch('api/logout.php', { method: 'POST', credentials: 'same-origin' })
@@ -56,21 +90,20 @@
 
   settingsBtn.addEventListener('click', function (e) {
     e.stopPropagation();
-    var open = settingsDropdown.style.display === 'block';
-    settingsDropdown.style.display = open ? 'none' : 'block';
-    settingsBtn.setAttribute('aria-expanded', String(!open));
+    var open = settingsDropdown.classList.toggle('open');
+    settingsBtn.setAttribute('aria-expanded', String(open));
   });
 
   document.addEventListener('click', function (e) {
     if (!settingsDropdown.contains(e.target) && e.target !== settingsBtn) {
-      settingsDropdown.style.display = 'none';
+      settingsDropdown.classList.remove('open');
       settingsBtn.setAttribute('aria-expanded', 'false');
     }
   });
 
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
-      settingsDropdown.style.display = 'none';
+      settingsDropdown.classList.remove('open');
       settingsBtn.setAttribute('aria-expanded', 'false');
     }
   });
@@ -326,7 +359,7 @@
     api('api/flood.php', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ level: level, wind_kmh: wind, rain_mmh: rain, notes: notes })
+      body:    JSON.stringify({ level: level, wind_kmh: wind, rain_mmh: rain, notes: notes, notify_sms: level >= 1 })
     })
       .then(function (data) {
         btn.disabled    = false;
@@ -334,7 +367,9 @@
         if (!data.ok) { toast(data.error || 'Hindi na-update.'); return; }
         document.getElementById('flood-notes').value = '';
         renderFlood();
-        toast('Antas ng baha na-update sa Antas ' + level + ' — ' + LEVEL_LABELS[level]);
+        var sms = data.sms || {};
+        var smsTxt = sms.sent > 0 ? ' · ' + sms.sent + ' SMS' : (sms.note ? ' · ' + sms.note : '');
+        toast('Antas ng baha na-update sa Antas ' + level + ' — ' + LEVEL_LABELS[level] + smsTxt);
       })
       .catch(function () {
         btn.disabled    = false;

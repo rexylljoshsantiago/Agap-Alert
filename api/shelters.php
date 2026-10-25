@@ -12,7 +12,7 @@ $rows = db()->query(
             b.name AS barangay_name
      FROM   shelters s
      LEFT   JOIN barangays b ON b.id = s.barangay_id
-     WHERE  s.is_open = 1
+     WHERE  s.is_open = 1 AND s.barangay_id = 1
      ORDER  BY s.id ASC"
 )->fetchAll();
 

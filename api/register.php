@@ -8,7 +8,7 @@ $body = json_body();
 $full_name   = trim($body['full_name']   ?? '');
 $phone       = trim($body['phone_number'] ?? '');
 $email       = strtolower(trim($body['email'] ?? ''));
-$barangay_id = isset($body['barangay_id']) ? (int) $body['barangay_id'] : 0;
+$barangay_id = 1;
 $password    = $body['password'] ?? '';
 $invite_code = strtoupper(trim($body['invite_code'] ?? ''));
 
@@ -24,8 +24,6 @@ if (empty($phone) || !preg_match('/^[0-9+()\-\s]{7,40}$/', $phone))
 if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL))
     $errors['email'] = 'Enter a valid email address.';
 
-if ($barangay_id < 1)
-    $errors['barangay_id'] = 'Select your barangay.';
 
 if (strlen($password) < 8)
     $errors['password'] = 'Password must be at least 8 characters.';

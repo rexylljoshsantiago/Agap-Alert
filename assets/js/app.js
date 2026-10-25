@@ -193,7 +193,7 @@
     { w: 105, r: 52   }
   ];
 
-  // Evacuation centers
+  // Evacuation centers (Barangay Dalongue only)
   var CT = [
     {
       n: 'Dalongue Barangay Evacuation Hall', b: 'Dalongue',
@@ -202,24 +202,6 @@
       f: 'Medical aid, generator power, rescue boats on site',
       s: 'Clean drinking water (800 L), ready-to-eat rice, hygiene kits, first aid station',
       p: '(075) 518-2024'
-    },
-    {
-      n: 'Santa Barbara Multi-Purpose Gymnasium', b: 'Poblacion Sur',
-      k: 1.2, o: 110, c: 350, el: 22,
-      e: '22 m high elevation',
-      f: 'Medical aid, pet friendly, solar backup',
-      s: 'Hot meals desk, thermal blankets, medical station, infant formula',
-      p: '0917-508-1122'
-    },
-    {
-      n: 'Tuliao Disaster Evacuation Center', b: 'Tuliao',
-      k: 1.8, o: 65, c: 220, el: 20,
-      e: '20 m elevation', f: '', s: '', p: ''
-    },
-    {
-      n: 'Minien National High School Shelter', b: 'Minien',
-      k: 2.6, o: 88, c: 200, el: 21,
-      e: '21 m high ground', f: '', s: '', p: ''
     }
   ];
 
@@ -258,6 +240,7 @@
     inc:   1,
     pubLv: 2,
     pubC:  0,
+    pubReach: null,
     reps:  []
   };
 
@@ -307,10 +290,7 @@
 
   // Real-world coordinates for evacuation centers (Dalongue, Santa Barbara, Pangasinan)
   var CT_COORDS = [
-    [15.9643, 120.4138],  // Dalongue Barangay Evacuation Hall
-    [15.9598, 120.4095],  // Santa Barbara Multi-Purpose Gymnasium (Poblacion Sur)
-    [15.9712, 120.4198],  // Tuliao Disaster Evacuation Center
-    [15.9581, 120.4230]   // Minien National High School Shelter
+    [15.9643, 120.4138]   // Dalongue Barangay Evacuation Hall
   ];
 
   // Flood zone polygon along Sinocalan River (Dalongue)
@@ -523,7 +503,7 @@
           + [
               ['Water Search and Rescue',    'Active in Dalongue',    '--ok'],
               ['Dalongue QRT boat crew',     'On patrol',             '--ac'],
-              ['MDRRMO logistics truck',     'En route to Tuliao',    '--amb']
+              ['MDRRMO logistics truck',     'On standby — Dalongue', '--amb']
             ].map(function (t) {
               return '<div class="rw"><span>' + t[0] + '</span>'
                 + '<span class="dot" style="--c:var(' + t[2] + ')">' + t[1] + '</span></div>';
@@ -912,7 +892,13 @@
 
   function pubForm() {
     var levels = [T('lv')[1], T('lv')[2], T('lv')[3]];
-    var reach  = [1860, 2640, 3240][S.pubLv - 1];
+    var r      = S.pubReach;
+    var reachLabel = r
+      ? (r.sms_enabled
+          ? r.sms_capable + ' SMS · ' + r.registered + ' rehistrado'
+          : r.registered + ' rehistrado (i-enable ang SMS sa config)')
+      : (S.lang === 'fil' ? 'Kinukuha ang bilang…' : 'Loading reach…');
+    var btnReach = r ? (r.sms_capable || r.registered) : '…';
 
     dlg(
       '<header><h3>' + T('pubb') + '</h3>' + xb() + '</header>'
@@ -921,16 +907,29 @@
               return '<button class="chp" data-a="pl" data-v="' + (i + 1) + '" aria-pressed="' + (S.pubLv === i + 1) + '">' + lbl + '</button>';
             }).join('')
       + '</div>'
-      + '<textarea class="fi" aria-label="Mensahe">' + T('ti')[S.pubLv] + '. ' + T('td')[S.pubLv][0] + '</textarea>'
-      + '<div class="rw" style="width:100%"><span>Mga Lugar</span><span>Dalongue, Poblacion Sur, Tuliao</span></div>'
-      + '<div class="rw" style="width:100%"><span>Tinatanggap</span><span class="mono">' + reach + ' device, SMS at push</span></div>'
+      + '<textarea class="fi" id="pub-msg" aria-label="Mensahe">' + T('ti')[S.pubLv] + '. ' + T('td')[S.pubLv][0] + '</textarea>'
+      + '<div class="rw" style="width:100%"><span>Mga Lugar</span><span>Barangay Dalongue</span></div>'
+      + '<div class="rw" style="width:100%"><span>Abot</span><span class="mono">' + reachLabel + '</span></div>'
       + '<button class="btn w" data-a="pubgo" style="' + (S.pubC ? 'background:var(--rose);color:#fff' : '') + '">'
           + (S.pubLv === 3 && !S.pubC ? 'Suriin ang Kritikal na abiso'
             : S.pubLv === 3           ? 'Kumpirmahin at ilabas ang Kritikal na abiso'
-                                      : 'Ilabas sa ' + reach + ' device')
+                                      : 'Ilabas (SMS + dashboard · ' + btnReach + ')')
       + '</button>'
-      + '<p class="dim" style="font-size:13px;text-align:center">Inilalabas bilang MDRRMO Santa Barbara. Nire-record sa audit log.</p>'
+      + '<p class="dim" style="font-size:13px;text-align:center">Inilalabas bilang MDRRMO Santa Barbara. Makikita ng mga residente sa loob ng ~1 min; SMS kung naka-configure.</p>'
     );
+  }
+
+  function fetchAlertReach(thenOpen) {
+    fetch('api/flood.php?reach=1', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        S.pubReach = (data.ok && data.reach) ? data.reach : null;
+        if (thenOpen) pubForm();
+      })
+      .catch(function () {
+        S.pubReach = null;
+        if (thenOpen) pubForm();
+      });
   }
 
   /* ── Action handlers ─────────────────────────────────────────────────────── */
@@ -1007,13 +1006,15 @@
     toast: function (v)     { toast(v); },
     sos:   sosForm,
     rep:   repForm,
-    pub:   function ()      { S.pubC = 0; pubForm(); },
+    pub:   function ()      { S.pubC = 0; fetchAlertReach(true); },
     pl:    function (v)     { S.pubLv = +v; S.pubC = 0; pubForm(); },
     pubgo: function () {
       if (S.pubLv === 3 && !S.pubC) { S.pubC = 1; pubForm(); return; }
 
       var lv    = S.pubLv;
-      var notes = T('ti')[lv] + '. ' + T('td')[lv][0];
+      var msgEl = document.getElementById('pub-msg');
+      var notes = msgEl ? msgEl.value.trim() : '';
+      if (!notes) notes = T('ti')[lv] + '. ' + T('td')[lv][0];
       var wind  = LVD[lv].w;
       var rain  = LVD[lv].r;
 
@@ -1021,7 +1022,7 @@
         method:      'POST',
         credentials: 'same-origin',
         headers:     { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ level: lv, wind_kmh: wind, rain_mmh: rain, notes: notes })
+        body: JSON.stringify({ level: lv, wind_kmh: wind, rain_mmh: rain, notes: notes, notify_sms: true })
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -1029,9 +1030,15 @@
           S.lv   = lv;
           S.pubC = 0;
           render();
-          toast(data.ok
-            ? 'Abiso nailabas — Antas ' + lv + ' para sa Dalongue, Poblacion Sur at Tuliao'
-            : 'Na-update nang lokal lamang. ' + (data.error || ''));
+          if (!data.ok) {
+            toast('Na-update nang lokal lamang. ' + (data.error || ''));
+            return;
+          }
+          var sms = data.sms || {};
+          var extra = '';
+          if (sms.sent > 0) extra = ' · ' + sms.sent + ' SMS naipadala';
+          else if (sms.note) extra = ' · SMS: ' + sms.note;
+          toast('Abiso nailabas — Antas ' + lv + ' para sa Barangay Dalongue' + extra);
         })
         .catch(function () {
           // Offline — still update locally
@@ -1420,6 +1427,11 @@
   }
 
   /* ── Initial render ──────────────────────────────────────────────────────── */
+  var _urlTab = new URLSearchParams(window.location.search).get('tab');
+  if (_urlTab && { radar: 1, centers: 1, reports: 1, hotlines: 1 }[_urlTab]) {
+    S.tab = _urlTab;
+  }
+
   render();
 
   // Fetch live data on load
@@ -1427,8 +1439,8 @@
   fetchShelters();
   fetchReports(true);
 
-  // Refresh flood level every 2 minutes, shelters/reports every 5 minutes
-  setInterval(fetchFloodLevel, 2 * 60 * 1000);
+  // Refresh flood level every minute (live abiso band), shelters/reports every 5 minutes
+  setInterval(fetchFloodLevel, 60 * 1000);
   setInterval(fetchShelters,   5 * 60 * 1000);
   setInterval(function () { fetchReports(true); }, 5 * 60 * 1000);
 

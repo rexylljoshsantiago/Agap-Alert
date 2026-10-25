@@ -21,40 +21,41 @@
 
 <div class="admin-wrap">
 
-  <header class="admin-bar">
-    <div class="brand">
-      <img src="assets/img/logo.png" alt="">
-      AgapAlert <span style="font-weight:400;color:var(--mute);margin-left:0.4rem">/ Admin</span>
-    </div>
-    <div class="admin-bar-right">
-      <span id="admin-name" class="bar-name"></span>
+  <header class="hd">
+    <div class="hi">
+      <a class="brand" href="index.html">
+        <img src="assets/img/logo.png" alt="">
+        AGAP Alert
+      </a>
 
-      <button id="theme-btn" class="admin-bar-btn" aria-label="Toggle light/dark mode">
-        <svg id="theme-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
+      <nav class="tabs" id="main-tabs" aria-label="Main"></nav>
 
-      <div style="position:relative">
-        <button id="settings-btn" class="admin-bar-btn" aria-label="Settings" aria-expanded="false" aria-haspopup="true">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      <div class="hr">
+        <div class="user-chip">
+          <span class="name" id="admin-name"></span>
+        </div>
+        <button class="theme-btn" id="theme-btn" type="button" aria-label="Toggle light/dark mode">
+          <svg id="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-        <div id="settings-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:155px;background:var(--s1);border:1px solid var(--line2);border-radius:var(--r-s);overflow:hidden;box-shadow:var(--sh-md);z-index:200">
-          <a href="profile.html" class="admin-dropdown-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Profile
-          </a>
-          <a href="index.html" class="admin-dropdown-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Dashboard
-          </a>
-          <button id="signout-btn" class="admin-dropdown-item admin-dropdown-item-danger">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Mag-sign out
+        <div class="settings-menu" id="settings-menu">
+          <button class="settings-btn" id="settings-btn" aria-label="Settings" aria-expanded="false" aria-haspopup="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
           </button>
+          <div class="settings-dropdown" id="settings-dropdown">
+            <a class="settings-item" href="profile.html">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Profile
+            </a>
+            <button class="settings-item settings-item-danger" id="signout-btn" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -132,7 +133,7 @@
           </div>
           <button class="gen-btn" id="flood-btn" style="align-self:flex-start">I-update ang Antas</button>
           <p style="font-size:12px;color:var(--dim);margin:0">
-            I-update ito kada oras o tuwing may pagbabago sa lebel ng ilog. Ang mga residente ay makakakita ng bagong antas sa loob ng 2 minuto.
+            I-update ito kada oras o tuwing may pagbabago sa lebel ng ilog. Ang mga residente ay makakakita ng bagong antas sa loob ng ~1 minuto; SMS kung naka-enable sa config.
           </p>
         </div>
         <div id="flood-history" style="padding:0 1.4rem 1.4rem"></div>
@@ -197,6 +198,8 @@
     </div>
 
   </main>
+
+  <nav id="bn" aria-label="Main"></nav>
 </div>
 
 <div class="toast-bar" id="toast"></div>

@@ -485,6 +485,22 @@
   }
 
   /* ── View renderers ──────────────────────────────────────────────────────── */
+  function band() {
+    var b = document.getElementById('band');
+    if (!b) return;
+    b.dataset.l = S.lv;
+    b.innerHTML = '<div class="bi">'
+      + (S.lv === 0 ? '<img src="' + LOGO + '" alt="">' : '')
+      + '<div>'
+          + '<span class="k">' + (S.lv ? T('alarm') + ' ' + S.lv + ', ' : '') + T('lv')[S.lv] + '</span>'
+          + '<h2>' + T('ti')[S.lv] + '</h2>'
+      + '</div>'
+      + '<span class="by' + (S.net ? '' : ' old') + '">'
+          + (S.lv ? T('issuer') : (S.net ? T('upd') : T('saved')))
+      + '</span>'
+      + '</div>';
+  }
+
   function netbar() {
     $('#netbar').innerHTML = S.net
       ? ''
@@ -676,6 +692,7 @@
     var scrollY = window.scrollY;
     var views   = { radar: radar, centers: centers, reports: reports, hotlines: hotlines };
     $('#pg').innerHTML = views[S.tab]();
+    band();
     netbar();
     nav();
     if (S.tab === 'radar') { initMapAfterRender(); updateWeatherUI(); }
@@ -1270,6 +1287,7 @@
         if (f.wind_kmh)     LVD[lv].w = parseFloat(f.wind_kmh);
         if (f.rain_mmh)     LVD[lv].r = parseFloat(f.rain_mmh);
         if (changed && S.tab === 'radar') render();
+        else band(); // always update the alert band
       })
       .catch(function () {});
   }

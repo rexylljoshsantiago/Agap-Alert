@@ -291,9 +291,158 @@
       .catch(function () { toast('Could not load officials.'); });
   }
 
+  /* ── Flood level ─────────────────────────────────────────────────────────── */
+  var LEVEL_LABELS = ['Normal', 'Bantay', 'Babala', 'Kritikal'];
+  var LEVEL_BADGES = ['badge-active', 'badge-unused', 'badge-pending', 'badge-expired'];
+
+  function renderFlood() {
+    api('api/flood.php')
+      .then(function (data) {
+        if (!data.ok) return;
+        var f   = data.flood;
+        var lv  = parseInt(f.level) || 0;
+        var bdg = document.getElementById('flood-current-badge');
+        bdg.textContent = 'Kasalukuyan: Antas ' + lv + ' — ' + LEVEL_LABELS[lv];
+        bdg.className   = 'badge ' + LEVEL_BADGES[lv];
+
+        // Pre-fill form
+        document.getElementById('flood-level').value = lv;
+        if (f.river_meters) document.getElementById('flood-river').value = parseFloat(f.river_meters);
+        if (f.wind_kmh)     document.getElementById('flood-wind').value  = parseFloat(f.wind_kmh);
+        if (f.rain_mmh)     document.getElementById('flood-rain').value  = parseFloat(f.rain_mmh);
+      })
+      .catch(function () {});
+  }
+
+  document.getElementById('flood-btn').addEventListener('click', function () {
+    var btn   = this;
+    var level = parseInt(document.getElementById('flood-level').value);
+    var river = parseFloat(document.getElementById('flood-river').value) || 0;
+    var wind  = parseFloat(document.getElementById('flood-wind').value)  || 0;
+    var rain  = parseFloat(document.getElementById('flood-rain').value)  || 0;
+    var notes = document.getElementById('flood-notes').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Ina-update…';
+
+    api('api/flood.php', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ level: level, river_meters: river, wind_kmh: wind, rain_mmh: rain, notes: notes })
+    })
+      .then(function (data) {
+        btn.disabled    = false;
+        btn.textContent = 'I-update ang Antas';
+        if (!data.ok) { toast(data.error || 'Hindi na-update.'); return; }
+        document.getElementById('flood-notes').value = '';
+        renderFlood();
+        toast('Antas ng baha na-update sa Antas ' + level + ' — ' + LEVEL_LABELS[level]);
+      })
+      .catch(function () {
+        btn.disabled    = false;
+        btn.textContent = 'I-update ang Antas';
+        toast('Hindi ma-reach ang server.');
+      });
+  });
+
+  /* ── Shelter occupancy ───────────────────────────────────────────────────── */
+  function renderShelters() {
+    var el = document.getElementById('shelters-list');
+    el.innerHTML = '<div class="empty">Kumukuha…</div>';
+
+    api('api/admin/shelters.php')
+      .then(function (data) {
+        if (!data.ok) { toast('Hindi ma-load ang mga likasan.'); return; }
+        var shelters = data.shelters;
+
+        if (!shelters.length) {
+          el.innerHTML = '<div class="empty">Walang likasan sa database. Mag-import ng database.sql.</div>';
+          return;
+        }
+
+        el.innerHTML = shelters.map(function (s) {
+          var pct = s.capacity > 0 ? Math.round(s.occupancy / s.capacity * 100) : 0;
+          var barColor = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e';
+          return '<div class="approval-row" style="flex-direction:column;align-items:stretch;gap:0.75rem" id="shelter-row-' + s.id + '">'
+            + '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">'
+                + '<div style="flex:1;min-width:180px">'
+                    + '<strong style="font-size:14px;color:var(--ink)">' + s.name + '</strong>'
+                    + '<span style="display:block;font-size:12.5px;color:var(--mute)">'
+                        + (s.barangay_name || '') + (s.contact ? ' · ' + s.contact : '')
+                    + '</span>'
+                + '</div>'
+                + '<span class="badge ' + (s.is_open ? 'badge-active' : 'badge-expired') + '">'
+                    + (s.is_open ? 'Bukas' : 'Sarado')
+                + '</span>'
+            + '</div>'
+            + '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">'
+                + '<div style="flex:1;min-width:200px">'
+                    + '<div style="height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-bottom:4px">'
+                        + '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:4px;transition:width 0.3s"></div>'
+                    + '</div>'
+                    + '<span style="font-size:12.5px;color:var(--mute)">' + s.occupancy + ' / ' + s.capacity + ' (' + pct + '% puno)</span>'
+                + '</div>'
+                + '<div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0">'
+                    + '<label class="gen-label" style="margin:0;white-space:nowrap">Bilang ng tao:</label>'
+                    + '<input class="gen-input" style="width:90px;padding:0.4rem 0.6rem" type="number" min="0" max="' + s.capacity + '" value="' + s.occupancy + '" id="occ-' + s.id + '">'
+                    + '<button class="gen-btn" style="padding:0.4rem 0.9rem;font-size:13px" data-shelter-id="' + s.id + '" data-capacity="' + s.capacity + '">I-save</button>'
+                    + '<button class="btn-revoke" style="padding:0.35rem 0.75rem;font-size:12.5px" data-shelter-toggle="' + s.id + '" data-open="' + s.is_open + '">'
+                        + (s.is_open ? 'Isara' : 'Buksan')
+                    + '</button>'
+                + '</div>'
+            + '</div>'
+          + '</div>';
+        }).join('');
+
+        // Save occupancy
+        el.querySelectorAll('[data-shelter-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id  = parseInt(this.dataset.shelterId);
+            var cap = parseInt(this.dataset.capacity);
+            var occ = parseInt(document.getElementById('occ-' + id).value) || 0;
+            if (occ > cap) { toast('Hindi maaaring lampas sa kapasidad (' + cap + ').'); return; }
+            btn.disabled = true;
+            api('api/admin/shelters.php', {
+              method:  'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ id: id, occupancy: occ })
+            }).then(function (data) {
+              btn.disabled = false;
+              if (!data.ok) { toast(data.error || 'Hindi na-update.'); return; }
+              renderShelters();
+              toast('Occupancy na-update.');
+            }).catch(function () { btn.disabled = false; toast('Hindi ma-reach ang server.'); });
+          });
+        });
+
+        // Toggle open/closed
+        el.querySelectorAll('[data-shelter-toggle]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id     = parseInt(this.dataset.shelterToggle);
+            var isOpen = parseInt(this.dataset.open);
+            var occ    = parseInt(document.getElementById('occ-' + id).value) || 0;
+            btn.disabled = true;
+            api('api/admin/shelters.php', {
+              method:  'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ id: id, occupancy: occ, is_open: isOpen ? 0 : 1 })
+            }).then(function (data) {
+              btn.disabled = false;
+              if (!data.ok) { toast(data.error || 'Hindi na-update.'); return; }
+              renderShelters();
+              toast('Status ng likasan na-update.');
+            }).catch(function () { btn.disabled = false; });
+          });
+        });
+      })
+      .catch(function () { toast('Hindi ma-load ang mga likasan.'); });
+  }
+
   /* ── Initial load ────────────────────────────────────────────────────────── */
   renderPending();
   renderCodes();
   renderOfficials();
+  renderFlood();
+  renderShelters();
 
 })();

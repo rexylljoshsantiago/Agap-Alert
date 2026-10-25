@@ -100,15 +100,9 @@
       hot: 'Hotlines', sos: 'Request rescue', pubb: 'Publish advisory',
       goNow: 'Go now', near: 'Nearest shelter', walk: 'min on foot',
       left: 'places left', route: 'Show route', shown: 'Route shown',
-      close: 'Close', river: 'River level at Dalongue gauge', todo: 'What to do',
+      close: 'Close', todo: 'What to do',
       wind: 'Wind', rain: 'Rain', space: 'Shelter space',
       upd: 'Updated', saved: 'Saved',
-      hrs: '24 hours ago', now: 'Now', fc: '+6 h',
-      stead: 'No rise expected in the next 6 hours.',
-      above: 'Above the Critical line of 8.0 m.',
-      reach: 'At this rate it reaches {m} m in {t}.',
-      h1: 'about an hour', hn: 'about {n} hours',
-      nofc: 'Forecast unavailable while offline.',
       off1: 'No connection.',
       off2: 'Showing saved information. Numbers may be out of date.',
       offb: 'Send SOS by SMS',
@@ -151,15 +145,9 @@
       goNow: 'Pumunta na ngayon', near: 'Pinakamalapit na likasan',
       walk: 'minuto kung lalakad', left: 'puwesto pa',
       route: 'Ipakita ang ruta', shown: 'Ipinapakita ang ruta', close: 'Isara',
-      river: 'Lebel ng ilog sa Dalongue', todo: 'Ano ang gagawin',
+      todo: 'Ano ang gagawin',
       wind: 'Hangin', rain: 'Ulan', space: 'Puwesto sa likasan',
       upd: 'Na-update 14:05', saved: 'Na-save 14:05',
-      hrs: '24 oras ang nakaraan', now: 'Ngayon', fc: '+6 oras',
-      stead: 'Walang inaasahang pagtaas sa susunod na 6 na oras.',
-      above: 'Lampas na sa Critical na 8.0 m.',
-      reach: 'Sa bilis na ito, aabot ito sa {m} m sa loob ng {t}.',
-      h1: 'mga isang oras', hn: 'mga {n} oras',
-      nofc: 'Walang forecast habang offline.',
       off1: 'Walang koneksyon.',
       off2: 'Ipinapakita ang impormasyong na-save noong 14:05. Maaaring luma na ang mga numero.',
       offb: 'Magpadala ng SOS sa text',
@@ -197,20 +185,12 @@
     }
   };
 
-  // River level data per alert level [0–3]
+  // Fallback wind/rain values per alert level (overridden by live weather API)
   var LVD = [
-    { m: 3.2,  rate: 0,    w: 12,  r: 0.5, hz: 0,    tr: 'Steady for the last 6 hours' },
-    { m: 4.6,  rate: 0.05, w: 38,  r: 8,   hz: 0.35, tr: 'Rising, up 0.3 m since this morning' },
-    { m: 5.82, rate: 0.18, w: 82,  r: 34,  hz: 0.6,  tr: 'Rising, up 0.18 m in the last hour' },
-    { m: 8.2,  rate: 0.5,  w: 105, r: 52,  hz: 0.9,  tr: 'Rising fast, up 0.5 m in the last hour' }
-  ];
-
-  // Filipino trend strings (index matches alert level)
-  var TRF = [
-    'Matatag nitong nakaraang 6 na oras',
-    'Tumataas, 0.3 m mula kaninang umaga',
-    'Tumataas, 0.18 m sa nakaraang oras',
-    'Mabilis na tumataas, 0.5 m sa nakaraang oras'
+    { w: 12,  r: 0.5  },
+    { w: 38,  r: 8    },
+    { w: 82,  r: 34   },
+    { w: 105, r: 52   }
   ];
 
   // Evacuation centers
@@ -282,7 +262,6 @@
   };
 
   /* ── Utility functions ───────────────────────────────────────────────────── */
-  var H  = {};   // hydrograph state
   var tt;        // toast timer
 
   function T(k) {
@@ -309,124 +288,15 @@
   function tel(n) { return 'tel:' + n.replace(/[^0-9+]/g, ''); }
   function walk(c){ return Math.max(1, Math.round(c.k * 15)); }
 
-  function clk(h) {
-    var base = new Date();
-    var m = (base.getHours() * 60 + base.getMinutes() - Math.round(h * 60) + 1440) % 1440;
-    return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2);
-  }
-
   function nowHHMM() {
     var d = new Date();
     return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
   }
-
-  /* ── Hydrograph ──────────────────────────────────────────────────────────── */
-  function hydro(L) {
-    var N  = 25;
-    var st = L.rate === 0;
-    var vals = [], fc = [];
-    var GW = 340, HH = 132;
-    var xs = GW * 0.8;
-
-    var y = function (v) { return 120 - Math.min(v, 10) / 10 * 108; };
-
-    for (var i = 0; i < N; i++) {
-      var u  = i / (N - 1);
-      var s0 = Math.max(1.4, L.m * 0.5);
-      vals.push(
-        st
-          ? L.m + Math.sin(i * 1.3) * 0.07
-          : s0 + (L.m - s0) * Math.pow(u, 1.7) + Math.sin(i * 1.7) * 0.05
-      );
-    }
-    vals[N - 1] = L.m;
-
-    if (S.net && !st) {
-      for (var j = 1; j <= 6; j++) fc.push(L.m + L.rate * j);
-    }
-
-    H = { vals: vals, fc: fc, xs: xs, W: GW };
-
-    var px = function (i) { return (i / (N - 1) * xs).toFixed(1); };
-
-    var d  = 'M' + vals.map(function (v, i) { return px(i) + ' ' + y(v).toFixed(1); }).join('L');
-    var fd = fc.length
-      ? 'M' + xs + ' ' + y(L.m) + 'L' + fc.map(function (v, j) {
-          return (xs + (GW - xs) * (j + 1) / 6).toFixed(1) + ' ' + y(v).toFixed(1);
-        }).join('L')
-      : '';
-
-    return (
-      '<svg class="hy" id="hy" viewBox="0 0 ' + GW + ' ' + HH + '"'
-        + ' role="img" aria-label="River level over 24 hours with alarm and critical lines">'
-      + '<rect x="0" y="' + y(8) + '" width="' + GW + '" height="' + (y(6) - y(8)).toFixed(1) + '" fill="var(--amb)" opacity=".1"/>'
-      + '<rect x="0" y="12" width="' + GW + '" height="' + (y(8) - 12).toFixed(1) + '" fill="var(--rose)" opacity=".12"/>'
-      + '<line x1="0" x2="' + GW + '" y1="' + y(6) + '" y2="' + y(6) + '" stroke="var(--amb)" stroke-dasharray="3 3"/>'
-      + '<line x1="0" x2="' + GW + '" y1="' + y(8) + '" y2="' + y(8) + '" stroke="var(--rose)" stroke-dasharray="3 3"/>'
-      + '<text x="3" y="' + (y(6) - 4) + '" fill="var(--amb)" font-size="10">Alarm 6.0 m</text>'
-      + '<text x="3" y="' + (y(8) - 4) + '" fill="var(--rose)" font-size="10">Critical 8.0 m</text>'
-      + '<path d="' + d + '" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"'
-        + (S.net ? '' : ' opacity=".55"') + '/>'
-      + (fd ? '<path d="' + fd + '" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="2 4"/>' : '')
-      + '<line id="hl" x1="0" x2="0" y1="6" y2="124" stroke="var(--dim)" opacity="0"/>'
-      + '<circle id="hd" r="4.5" cx="' + xs + '" cy="' + y(L.m) + '" fill="var(--ink)" stroke="var(--bg)" stroke-width="2"/>'
-      + '</svg>'
-      + '<div class="ax">'
-        + '<span>' + T('hrs') + '</span>'
-        + '<span>' + T('now') + '</span>'
-        + '<span>' + (fc.length ? T('fc') : '') + '</span>'
-      + '</div>'
-    );
+    var d = new Date();
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
   }
 
-  function proj(L) {
-    if (!S.net) return T('nofc');
-    if (L.rate === 0) return T('stead');
-    var nx = L.m < 6 ? 6 : L.m < 8 ? 8 : 0;
-    if (!nx) return T('above');
-    var h = (nx - L.m) / L.rate;
-    return T('reach')
-      .replace('{m}', nx.toFixed(1))
-      .replace('{t}', h < 1.5 ? T('h1') : T('hn').replace('{n}', Math.round(h)));
-  }
 
-  function bindHydro() {
-    var s = $('#hy');
-    if (!s || !s.addEventListener) return;
-
-    function mv(e) {
-      var r = s.getBoundingClientRect();
-      var x = (e.clientX - r.left) / r.width * H.W;
-      var v, t;
-
-      if (x <= H.xs) {
-        var i = Math.round(x / H.xs * 24);
-        v = H.vals[i];
-        t = clk(24 - i);
-        x = i / 24 * H.xs;
-      } else if (H.fc.length) {
-        var j = Math.max(1, Math.round((x - H.xs) / (H.W - H.xs) * 6));
-        v = H.fc[j - 1];
-        t = clk(-j) + ' (est.)';
-        x = H.xs + (H.W - H.xs) * j / 6;
-      } else {
-        return;
-      }
-
-      $('#hl').setAttribute('x1', x);
-      $('#hl').setAttribute('x2', x);
-      $('#hl').setAttribute('opacity', '.6');
-      $('#hv').textContent = t + ', ' + v.toFixed(2) + ' m';
-    }
-
-    function lv() {
-      $('#hl').setAttribute('opacity', '0');
-      $('#hv').textContent = '';
-    }
-
-    s.addEventListener('pointermove',  mv);
-    s.addEventListener('pointerleave', lv);
-  }
 
   /* ── Leaflet map ─────────────────────────────────────────────────────────── */
   var _leafMap         = null;
@@ -674,16 +544,6 @@
                   + '<button class="btn ac w" data-a="route" data-v="0">' + ic('nav') + T('route') + '</button>'              + '</div>'
           + '</div>'
           + '<div class="sec">'
-              + '<p class="lb">' + T('river') + '</p>'
-              + '<div class="read' + o + '">' + L.m.toFixed(2).replace(/0$/, '') + '<small>m</small></div>'
-              + '<p class="mute' + o + '" style="margin-top:6px">'
-                  + (S.lang === 'fil' ? TRF[S.lv] : L.tr)
-              + '</p>'
-              + '<div class="hv" id="hv"></div>'
-              + hydro(L)
-              + '<p class="mute" style="font-size:13.5px;margin-top:8px">' + proj(L) + '</p>'
-          + '</div>'
-          + '<div class="sec">'
               + '<p class="lb">' + T('todo') + '</p>'
               + '<ol class="todo">'
                   + T('td')[S.lv].map(function (t) { return '<li><span>' + t + '</span></li>'; }).join('')
@@ -823,7 +683,7 @@
     $('#pg').innerHTML = views[S.tab]();
     netbar();
     nav();
-    if (S.tab === 'radar') { initMapAfterRender(); bindHydro(); updateWeatherUI(); }
+    if (S.tab === 'radar') { initMapAfterRender(); updateWeatherUI(); }
     if (S.tab === 'reports') {
       var led = document.getElementById('reports-led');
       if (led) { _renderReportRows(led); _renderLoadMore(); }
@@ -1143,9 +1003,6 @@
 
       var lv    = S.pubLv;
       var notes = T('ti')[lv] + '. ' + T('td')[lv][0];
-
-      // Get current river/wind/rain from LVD so we don't zero them out
-      var river = LVD[lv].m;
       var wind  = LVD[lv].w;
       var rain  = LVD[lv].r;
 
@@ -1153,7 +1010,7 @@
         method:      'POST',
         credentials: 'same-origin',
         headers:     { 'Content-Type': 'application/json' },
-        body:        JSON.stringify({ level: lv, river_meters: river, wind_kmh: wind, rain_mmh: rain, notes: notes })
+        body: JSON.stringify({ level: lv, wind_kmh: wind, rain_mmh: rain, notes: notes })
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -1413,11 +1270,10 @@
         var changed = S.lv !== lv;
         S.lv = lv;
         // Update static LVD with real readings so the hydrograph stays accurate
-        if (f.river_meters) LVD[lv].m = parseFloat(f.river_meters);
-        if (f.wind_kmh)     LVD[lv].w = parseFloat(f.wind_kmh);
-        if (f.rain_mmh)     LVD[lv].r = parseFloat(f.rain_mmh);
         _updateRefreshTime();
         _dataLoaded = true;
+        if (f.wind_kmh)     LVD[lv].w = parseFloat(f.wind_kmh);
+        if (f.rain_mmh)     LVD[lv].r = parseFloat(f.rain_mmh);
         if (changed && S.tab === 'radar') render();
       })
       .catch(function () {});
@@ -1580,3 +1436,4 @@
   }
 
 })();
+

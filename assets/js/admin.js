@@ -307,9 +307,8 @@
 
         // Pre-fill form
         document.getElementById('flood-level').value = lv;
-        if (f.river_meters) document.getElementById('flood-river').value = parseFloat(f.river_meters);
-        if (f.wind_kmh)     document.getElementById('flood-wind').value  = parseFloat(f.wind_kmh);
-        if (f.rain_mmh)     document.getElementById('flood-rain').value  = parseFloat(f.rain_mmh);
+        if (f.wind_kmh) document.getElementById('flood-wind').value = parseFloat(f.wind_kmh);
+        if (f.rain_mmh) document.getElementById('flood-rain').value = parseFloat(f.rain_mmh);
       })
       .catch(function () {});
   }
@@ -317,7 +316,6 @@
   document.getElementById('flood-btn').addEventListener('click', function () {
     var btn   = this;
     var level = parseInt(document.getElementById('flood-level').value);
-    var river = parseFloat(document.getElementById('flood-river').value) || 0;
     var wind  = parseFloat(document.getElementById('flood-wind').value)  || 0;
     var rain  = parseFloat(document.getElementById('flood-rain').value)  || 0;
     var notes = document.getElementById('flood-notes').value.trim();
@@ -328,7 +326,7 @@
     api('api/flood.php', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ level: level, river_meters: river, wind_kmh: wind, rain_mmh: rain, notes: notes })
+      body:    JSON.stringify({ level: level, wind_kmh: wind, rain_mmh: rain, notes: notes })
     })
       .then(function (data) {
         btn.disabled    = false;

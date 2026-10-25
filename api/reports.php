@@ -2,11 +2,28 @@
 /**
  * api/reports.php
  * GET   — list reports (paginated via ?page=N&limit=N)
+ *         OR single report status via ?id=N
  * POST  — submit a new report or SOS
  * PATCH — update report status (officials only)
  */
 require_once __DIR__ . '/bootstrap.php';
 require_auth();
+
+$user   = current_user();
+$db     = db();
+$method = $_SERVER['REQUEST_METHOD'];
+
+// ── GET single report by id (used for SOS status polling) ─────────────────────
+if ($method === 'GET' && isset($_GET['id'])) {
+    $id   = (int) $_GET['id'];
+    $stmt = $db->prepare(
+        "SELECT id, status FROM reports WHERE id = ? LIMIT 1"
+    );
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    if (!$row) json_response(['ok' => false, 'error' => 'Not found.'], 404);
+    json_response(['ok' => true, 'report' => $row]);
+}
 
 $user   = current_user();
 $db     = db();

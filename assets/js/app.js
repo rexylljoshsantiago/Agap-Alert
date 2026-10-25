@@ -783,8 +783,9 @@
   /* ── Dialogs ─────────────────────────────────────────────────────────────── */
   var C   = 2 * Math.PI * 46;  // SOS ring circumference
   var n   = 1;                  // people count
-  var dep = 'Tuhod';             // lalim ng baha (default chip)
+  var dep = 'Tuhod';            // lalim ng baha (default chip)
   var raf = 0, t0 = 0, tm = [];
+  var _stopCurrentSosPoll = null; // set by sent(), cleared by A.close()
 
   function dlg(h) {
     $('#dlg').innerHTML = h;
@@ -884,14 +885,43 @@
       + '<button class="ul" data-a="safe">Ligtas na ako, kanselahin ang SOS</button>'
     );
 
-    // Animate the status steps
+    // Mark step 1 (Natanggap) immediately — the report was received by the server
     tm.forEach(clearTimeout);
-    tm = [300, 2500, 5000].map(function (d, i) {
-      return setTimeout(function () {
-        var el = $('#s' + (i + 1));
-        if (el) el.classList.add('d2');
-      }, d);
-    });
+    tm = [setTimeout(function () {
+      var el = $('#s1'); if (el) el.classList.add('d2');
+    }, 300)];
+
+    // Polling state
+    var _sosReportId  = null;
+    var _sosPollTimer = null;
+
+    function _stopSosPoll() {
+      if (_sosPollTimer) { clearInterval(_sosPollTimer); _sosPollTimer = null; }
+    }
+
+    function _pollSosStatus() {
+      if (!_sosReportId) return;
+      fetch('api/reports.php?id=' + _sosReportId, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok || !data.report) return;
+          var status = data.report.status;
+
+          // Step 2 — official acknowledged
+          if (status === 'acknowledged' || status === 'dispatched' || status === 'resolved') {
+            var s2 = $('#s2');
+            if (s2 && !s2.classList.contains('d2')) s2.classList.add('d2');
+          }
+
+          // Step 3 — dispatched or resolved
+          if (status === 'dispatched' || status === 'resolved') {
+            var s3 = $('#s3');
+            if (s3 && !s3.classList.contains('d2')) s3.classList.add('d2');
+            _stopSosPoll(); // done — no need to keep polling
+          }
+        })
+        .catch(function () {}); // silent — offline is expected
+    }
 
     // POST to database
     fetch('api/reports.php', {
@@ -913,7 +943,13 @@
             ? 'Ref #' + data.id + ' · ' + n + ' tao · ' + dep
             : 'Nai-save nang lokal — ipapadala kapag may koneksyon.';
         }
-        // Refresh reports list for officials
+        if (data.ok && data.id) {
+          _sosReportId = data.id;
+          // Poll every 8 seconds for real status updates from officials
+          _sosPollTimer = setInterval(_pollSosStatus, 8000);
+          // Store stop function so A.close() can cancel it
+          _stopCurrentSosPoll = _stopSosPoll;
+        }
         fetchReports(true);
       })
       .catch(function () {
@@ -1083,6 +1119,7 @@
     close: function () {
       hx();
       tm.forEach(clearTimeout);
+      if (_stopCurrentSosPoll) { _stopCurrentSosPoll(); _stopCurrentSosPoll = null; }
       $('#shade').classList.remove('on');
     },
     m: function () {

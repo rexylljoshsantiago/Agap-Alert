@@ -490,9 +490,8 @@
     if (!b) return;
     b.dataset.l = S.lv;
     b.innerHTML = '<div class="bi">'
-      + (S.lv === 0 ? '<img src="' + LOGO + '" alt="">' : '')
       + '<div>'
-          + '<span class="k">' + (S.lv ? T('alarm') + ' ' + S.lv + ', ' : '') + T('lv')[S.lv] + '</span>'
+          + '<span class="k">' + (S.lv ? T('alarm') + ' ' + S.lv + ' · ' : '') + T('lv')[S.lv] + '</span>'
           + '<h2>' + T('ti')[S.lv] + '</h2>'
       + '</div>'
       + '<span class="by' + (S.net ? '' : ' old') + '">'

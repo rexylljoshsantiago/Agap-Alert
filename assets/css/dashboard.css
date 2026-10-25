@@ -575,6 +575,7 @@ svg.i {
   background: var(--b);
   color: var(--o);
   border-bottom: 1px solid rgba(255,255,255,0.06);
+  min-height: 48px;
 }
 
 .band[data-l="1"] { --b: #2a1e00; --o: #ffd066; }

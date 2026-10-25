@@ -1,4 +1,5 @@
-<FilesMatch "^(?!setup\.php$).*$">
+# Block all direct web access to config files
+<FilesMatch ".*">
     Order allow,deny
     Deny from all
 </FilesMatch>

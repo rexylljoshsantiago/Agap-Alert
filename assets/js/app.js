@@ -93,58 +93,8 @@
 
   var LOGO = 'assets/img/logo.png';
 
-  /* ── Copy strings (EN / FIL) ─────────────────────────────────────────────── */
+  /* ── Copy strings (FIL) ─────────────────────────────────────────────────── */
   var D = {
-    en: {
-      map: 'Live map', sh: 'Shelters', rp: 'Reports', inc: 'Incidents',
-      hot: 'Hotlines', sos: 'Request rescue', pubb: 'Publish advisory',
-      goNow: 'Go now', near: 'Nearest shelter', walk: 'min on foot',
-      left: 'places left', route: 'Show route', shown: 'Route shown',
-      close: 'Close', river: 'River level at Dalongue gauge', todo: 'What to do',
-      wind: 'Wind', rain: 'Rain', space: 'Shelter space',
-      upd: 'Updated 14:05', saved: 'Saved 14:05',
-      hrs: '24 hours ago', now: 'Now', fc: '+6 h',
-      stead: 'No rise expected in the next 6 hours.',
-      above: 'Above the Critical line of 8.0 m.',
-      reach: 'At this rate it reaches {m} m in {t}.',
-      h1: 'about an hour', hn: 'about {n} hours',
-      nofc: 'Forecast unavailable while offline.',
-      off1: 'No connection.',
-      off2: 'Showing information saved at 14:05. Numbers may be out of date.',
-      offb: 'Send SOS by SMS',
-      l_flood: 'Flood zone', l_sh: 'Shelters', l_inc: 'Incidents',
-      callTxt: 'Call', issuer: 'MDRRMO Santa Barbara, 14:05', alarm: 'Alarm',
-      lv: ['Normal', 'Watch', 'Warning', 'Critical'],
-      ti: [
-        'Conditions normal',
-        'Monitor flood conditions',
-        'Preparatory evacuation advised',
-        'Forced evacuation in effect'
-      ],
-      td: [
-        [
-          'Keep your phone charged and alerts on.',
-          'Know which shelter is nearest to your home.',
-          'Check this page again if heavy rain starts.'
-        ],
-        [
-          'Pack your go-bag: water, food, medicines, documents.',
-          'Agree a meeting place with your family.',
-          'Be ready to leave if the level reaches 6.0 m.'
-        ],
-        [
-          'Leave low-lying and riverside homes now.',
-          'Take your go-bag, IDs and medicines.',
-          'Walk to Dalongue Barangay Evacuation Hall, 0.4 km away.'
-        ],
-        [
-          'Leave now and avoid flooded roads.',
-          'Go to the nearest high-ground shelter.',
-          'If you cannot leave, call the MDRRMO on (075) 518-2024.'
-        ]
-      ]
-    },
-
     fil: {
       map: 'Mapa', sh: 'Likasan', rp: 'Mga ulat', inc: 'Mga insidente',
       hot: 'Hotline', sos: 'Humingi ng saklolo', pubb: 'Maglabas ng abiso',
@@ -221,7 +171,7 @@
       e: '18 m high ground',
       f: 'Medical aid, generator power, rescue boats on site',
       s: 'Clean drinking water (800 L), ready-to-eat rice, hygiene kits, first aid station',
-      p: '(075) 518-2024', x: 272, y: 268
+      p: '(075) 518-2024'
     },
     {
       n: 'Santa Barbara Multi-Purpose Gymnasium', b: 'Poblacion Sur',
@@ -229,17 +179,17 @@
       e: '22 m high elevation',
       f: 'Medical aid, pet friendly, solar backup',
       s: 'Hot meals desk, thermal blankets, medical station, infant formula',
-      p: '0917-508-1122', x: 138, y: 342
+      p: '0917-508-1122'
     },
     {
       n: 'Tuliao Disaster Evacuation Center', b: 'Tuliao',
       k: 1.8, o: 65, c: 220, el: 20,
-      e: '20 m elevation', f: '', s: '', p: '', x: 504, y: 98
+      e: '20 m elevation', f: '', s: '', p: ''
     },
     {
       n: 'Minien National High School Shelter', b: 'Minien',
       k: 2.6, o: 88, c: 200, el: 21,
-      e: '21 m high ground', f: '', s: '', p: '', x: 572, y: 338
+      e: '21 m high ground', f: '', s: '', p: ''
     }
   ];
 
@@ -267,46 +217,17 @@
 
   /* ── App state ───────────────────────────────────────────────────────────── */
   var S = {
-    lv:      2,
-    role:    _isOfficial ? 'off' : 'res',
-    tab:     'radar',
-    net:     1,
-    lang:    'fil',
-    sel:     null,
-    route:   null,
-    open:    null,
-    more:    false,
-    z:       1,
-    fl:      1,
-    inc:     1,
-    pubLv:   2,
-    pubC:    0,
-    reps: [
-      {
-        t: '3 families stranded near Sinocalan River dike',
-        w: 'Barangay Dalongue, Sinocalan riverbank',
-        h: '2 min', st: 0, pr: 'Critical', tr: 2,
-        dt: 'Floodwater rising above waist level. 8 people including 2 seniors and 1 infant on an upper roof deck. A rescue boat is needed.',
-        ppl: 8, dep: 'Waist-deep (1.2 m)', sos: 1, x: 285, y: 196
-      },
-      {
-        t: 'Chest-deep flood water on the Dalongue-Tuliao access road',
-        w: 'Dalongue-Tuliao boundary road',
-        h: '12 min', st: 0, pr: 'High', tr: 1,
-        dt: 'Water level reached 1.4 m. Light vehicles and tricycles cannot pass. A high-clearance truck or rubber boat is needed.',
-        x: 392, y: 146
-      },
-      {
-        t: 'Senior insulin patient evacuation required',
-        w: 'Santa Barbara, Pangasinan',
-        h: '25 min', st: 1, pr: 'High', tr: 2, dt: '', x: 196, y: 150
-      },
-      {
-        t: 'Waist-deep rapid flood near Katipunan St.',
-        w: 'Santa Barbara, Pangasinan',
-        h: '35 min', st: 1, pr: 'Critical', tr: 0, dt: '', x: 432, y: 252
-      }
-    ]
+    lv:    2,
+    role:  _isOfficial ? 'off' : 'res',
+    tab:   'radar',
+    net:   1,
+    open:  null,
+    more:  false,
+    fl:    1,
+    inc:   1,
+    pubLv: 2,
+    pubC:  0,
+    reps:  []
   };
 
   /* ── Utility functions ───────────────────────────────────────────────────── */
@@ -316,13 +237,11 @@
   function T(k) {
     // These four keys use the current time rather than a hardcoded value
     var t = nowHHMM();
-    if (k === 'upd')    return S.lang === 'fil' ? 'Na-update ' + t : 'Updated ' + t;
-    if (k === 'saved')  return S.lang === 'fil' ? 'Na-save ' + t   : 'Saved ' + t;
+    if (k === 'upd')    return 'Na-update ' + t;
+    if (k === 'saved')  return 'Na-save ' + t;
     if (k === 'issuer') return 'MDRRMO Santa Barbara, ' + t;
-    if (k === 'off2')   return S.lang === 'fil'
-      ? 'Ipinapakita ang impormasyong na-save noong ' + t + '. Maaaring luma na ang mga numero.'
-      : 'Showing information saved at ' + t + '. Numbers may be out of date.';
-    return D[S.lang][k] != null ? D[S.lang][k] : D.en[k];
+    if (k === 'off2')   return 'Ipinapakita ang impormasyong na-save noong ' + t + '. Maaaring luma na ang mga numero.';
+    return D.fil[k] != null ? D.fil[k] : k;
   }
 
   function toast(msg) {
@@ -336,10 +255,6 @@
   function off()  { return S.role === 'off'; }
   function tel(n) { return 'tel:' + n.replace(/[^0-9+]/g, ''); }
   function walk(c){ return Math.max(1, Math.round(c.k * 15)); }
-
-  function hz() {
-    return S.lv === 1 ? 'var(--amb)' : S.lv === 2 ? '#E2662B' : 'var(--rose)';
-  }
 
   function clk(h) {
     var base = new Date();
@@ -652,21 +567,6 @@
   }
 
   /* ── View renderers ──────────────────────────────────────────────────────── */
-  function band() {
-    var b = $('#band');
-    b.dataset.l = S.lv;
-    b.innerHTML = '<div class="bi">'
-      + (S.lv === 0 ? '<img src="' + LOGO + '" alt="">' : '')
-      + '<div>'
-          + '<span class="k">' + (S.lv ? T('alarm') + ' ' + S.lv + ', ' : '') + T('lv')[S.lv] + '</span>'
-          + '<h2>' + T('ti')[S.lv] + '</h2>'
-      + '</div>'
-      + '<span class="by' + (S.net ? '' : ' old') + '">'
-          + (S.lv ? T('issuer') : (S.net ? T('upd') : T('saved')))
-      + '</span>'
-      + '</div>';
-  }
-
   function netbar() {
     $('#netbar').innerHTML = S.net
       ? ''
@@ -883,7 +783,7 @@
   /* ── Dialogs ─────────────────────────────────────────────────────────────── */
   var C   = 2 * Math.PI * 46;  // SOS ring circumference
   var n   = 1;                  // people count
-  var dep = 'Knee';             // flood depth
+  var dep = 'Tuhod';             // lalim ng baha (default chip)
   var raf = 0, t0 = 0, tm = [];
 
   function dlg(h) {
@@ -1046,33 +946,37 @@
   }
 
   function pubForm() {
-    var levels = ['Watch', 'Warning', 'Critical'];
+    var levels = [T('lv')[1], T('lv')[2], T('lv')[3]];
     var reach  = [1860, 2640, 3240][S.pubLv - 1];
 
     dlg(
-      '<header><h3>Publish advisory</h3>' + xb() + '</header>'
-      + '<div class="chips" style="width:100%" role="group" aria-label="Level">'
-          + levels.map(function (t, i) {
-              return '<button class="chp" data-a="pl" data-v="' + (i + 1) + '" aria-pressed="' + (S.pubLv === i + 1) + '">' + t + '</button>';
+      '<header><h3>' + T('pubb') + '</h3>' + xb() + '</header>'
+      + '<div class="chips" style="width:100%" role="group" aria-label="Antas">'
+          + levels.map(function (lbl, i) {
+              return '<button class="chp" data-a="pl" data-v="' + (i + 1) + '" aria-pressed="' + (S.pubLv === i + 1) + '">' + lbl + '</button>';
             }).join('')
       + '</div>'
-      + '<textarea class="fi" aria-label="Message">' + D.en.ti[S.pubLv] + '. ' + D.en.td[S.pubLv][0] + '</textarea>'
-      + '<div class="rw" style="width:100%"><span>Areas</span><span>Dalongue, Poblacion Sur, Tuliao</span></div>'
-      + '<div class="rw" style="width:100%"><span>Estimated reach</span><span class="mono">' + reach + ' devices, SMS and push</span></div>'
+      + '<textarea class="fi" aria-label="Mensahe">' + T('ti')[S.pubLv] + '. ' + T('td')[S.pubLv][0] + '</textarea>'
+      + '<div class="rw" style="width:100%"><span>Mga Lugar</span><span>Dalongue, Poblacion Sur, Tuliao</span></div>'
+      + '<div class="rw" style="width:100%"><span>Tinatanggap</span><span class="mono">' + reach + ' device, SMS at push</span></div>'
       + '<button class="btn w" data-a="pubgo" style="' + (S.pubC ? 'background:var(--rose);color:#fff' : '') + '">'
-          + (S.pubLv === 3 && !S.pubC ? 'Review Critical alert'
-            : S.pubLv === 3           ? 'Confirm and publish Critical alert'
-                                      : 'Publish to ' + reach + ' devices')
+          + (S.pubLv === 3 && !S.pubC ? 'Suriin ang Kritikal na abiso'
+            : S.pubLv === 3           ? 'Kumpirmahin at ilabas ang Kritikal na abiso'
+                                      : 'Ilabas sa ' + reach + ' device')
       + '</button>'
-      + '<p class="dim" style="font-size:13px;text-align:center">Published as MDRRMO Santa Barbara. Recorded in the audit log.</p>'
+      + '<p class="dim" style="font-size:13px;text-align:center">Inilalabas bilang MDRRMO Santa Barbara. Nire-record sa audit log.</p>'
     );
   }
 
   /* ── Action handlers ─────────────────────────────────────────────────────── */
   var A = {
     tab:   function (v)     { if (v === 'admin') { window.location.href = 'admin.html'; return; } S.tab = v; render(); },
-    route: function (v)     { S.tab = 'radar'; S.sel = +v; S.route = +v; render(); toast('Route to ' + CT[v].n + ', about ' + walk(CT[v]) + ' min on foot'); },
-    pin:   function (v)     { S.sel = S.sel == +v ? null : +v; render(); },
+    route: function (v) {
+      var idx = +v;
+      if (S.tab !== 'radar') { S.tab = 'radar'; render(); }
+      setTimeout(function () { _drawRoute(idx); }, 200);
+      toast('Ginagawa ang ruta papunta sa ' + CT[idx].n + '…');
+    },
     open:  function (v)     { S.open = S.open === v ? null : v; render(); },
     more:  function ()      { S.more = !S.more; render(); },
     'load-more': function () {
@@ -1270,17 +1174,6 @@
     try { localStorage.setItem('agapalert_theme', dark ? 'dark' : 'light'); } catch (e) {}
   }
 
-  /* ── Theme toggle ────────────────────────────────────────────────────────── */
-  var root     = document.documentElement;
-  var themeBtn = document.getElementById('theme-btn');
-
-  function applyTheme(dark) {
-    root.setAttribute('data-theme', dark ? 'dark' : 'light');
-    themeBtn.innerHTML = '<svg class="i"><use href="#i-' + (dark ? 'sun' : 'moon') + '"/></svg>';
-    themeBtn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
-    try { localStorage.setItem('agapalert_theme', dark ? 'dark' : 'light'); } catch (e) {}
-  }
-
   var _savedTheme = localStorage.getItem('agapalert_theme');
   applyTheme(_savedTheme ? _savedTheme === 'dark' : true);
 
@@ -1316,7 +1209,7 @@
           _leafMap.setView([_userLat, _userLon], 16);
           _updateUserMarker();
         }
-        toast('Location found — showing your position on the map.');
+        toast('Nahanap ang lokasyon — makikita na ang iyong posisyon sa mapa.');
       },
       function () {
         // Denied or unavailable — stay centered on Dalongue, no dot shown
@@ -1395,7 +1288,6 @@
     'Severe Thunderstorm': 'Malakas na Bagyo'
   };
 
-  /* ── Initial render ──────────────────────────────────────────────────────── */
   /* ── Live data fetch ─────────────────────────────────────────────────────── */
 
   var _lastRefresh = null;
@@ -1423,10 +1315,6 @@
         _updateRefreshTime();
         _dataLoaded = true;
         if (changed && S.tab === 'radar') render();
-        else if (S.tab === 'radar') {
-          // Re-render just the band without full page re-render
-          if (document.getElementById('band')) band();
-        }
       })
       .catch(function () {});
   }

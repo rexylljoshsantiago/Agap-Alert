@@ -458,12 +458,12 @@
   var MAP_CENTER = [15.9650, 120.4150];
   var MAP_ZOOM   = 15;
 
-  // Real-world coordinates for evacuation centers
+  // Real-world coordinates for evacuation centers (Dalongue, Santa Barbara, Pangasinan)
   var CT_COORDS = [
-    [15.9640, 120.4140],  // Dalongue Barangay Evacuation Hall
-    [15.9610, 120.4110],  // Santa Barbara Multi-Purpose Gymnasium
-    [15.9700, 120.4200],  // Tuliao Disaster Evacuation Center
-    [15.9590, 120.4220]   // Minien National High School Shelter
+    [15.9643, 120.4138],  // Dalongue Barangay Evacuation Hall
+    [15.9598, 120.4095],  // Santa Barbara Multi-Purpose Gymnasium (Poblacion Sur)
+    [15.9712, 120.4198],  // Tuliao Disaster Evacuation Center
+    [15.9581, 120.4230]   // Minien National High School Shelter
   ];
 
   // Flood zone polygon along Sinocalan River (Dalongue)
@@ -493,8 +493,21 @@
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+      crossOrigin: true
+    }).on('tileerror', function () {
+      var el = document.getElementById('leaflet-map');
+      if (el && !el.querySelector('.tile-error-msg')) {
+        el.style.position = 'relative';
+        var msg = document.createElement('div');
+        msg.className = 'tile-error-msg';
+        msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+          + 'background:rgba(0,0,0,.7);color:#fff;padding:12px 20px;border-radius:8px;'
+          + 'font-size:13px;text-align:center;z-index:9999;pointer-events:none;max-width:280px';
+        msg.textContent = 'Kailangan ng internet para makita ang mapa. Gumagana pa rin ang mga marker at ruta.';
+        el.appendChild(msg);
+      }
     }).addTo(_leafMap);
 
     _updateFloodLayer();
@@ -674,10 +687,13 @@
 
     return '<div class="ph">'
         + '<div><h1>Dalongue, Santa Barbara</h1><p>Sinocalan River, Pangasinan</p></div>'
-        + '<div class="facts' + o + '">'
-            + '<div>' + T('wind') + '<b>' + L.w + ' km/h</b></div>'
-            + '<div>' + T('rain') + '<b>' + L.r + ' mm/h</b></div>'
-            + '<div>' + T('space') + '<b>' + sp + '</b></div>'
+        + '<div class="facts' + o + (_dataLoaded ? '' : ' loading') + '">'
+            + '<div>' + T('wind') + '<b>' + (_dataLoaded ? L.w + ' km/h' : '—') + '</b></div>'
+            + '<div>' + T('rain') + '<b>' + (_dataLoaded ? L.r + ' mm/h' : '—') + '</b></div>'
+            + '<div>' + T('space') + '<b>' + (_dataLoaded ? sp : '—') + '</b></div>'
+        + '</div>'
+        + '<div id="refresh-bar" style="font-size:12px;color:var(--dim);text-align:right;padding:2px 0 6px">'
+            + 'Huling na-refresh: <span id="last-refresh">ngayon</span>'
         + '</div>'
       + '</div>'
       + '<div class="cols"><div>' + map() + '</div><aside>'
@@ -710,9 +726,10 @@
   }
 
   function centers() {
+    var isOff = _isOfficial || _isAdmin;
     return '<div class="ph"><div>'
         + '<h1>' + T('sh') + '</h1>'
-        + '<p>' + CT.length + ' open near Dalongue, ' + (S.net ? 'updated 6 minutes ago' : 'saved 14:05') + '</p>'
+        + '<p>' + CT.length + ' bukas malapit sa Dalongue</p>'
       + '</div></div>'
       + '<div class="led">'
           + CT.map(function (c, i) {
@@ -724,15 +741,25 @@
                 + '<div class="ops">'
                     + '<button class="btn s" data-a="route" data-v="' + i + '">' + ic('nav') + T('route') + '</button>'
                     + '<button class="btn s o" data-a="open" data-v="c' + i + '" aria-expanded="' + o + '">'
-                        + (o ? 'Less' : 'Details')
+                        + (o ? 'Itago' : 'Detalye')
                     + '</button>'
                 + '</div>'
-                + '<div class="fold' + (o ? ' on' : '') + '"><div><p>'
-                    + c.e
-                    + (c.p ? '. Contact ' + c.p : '') + '.'
-                    + (c.f ? ' ' + c.f + '.' : '')
-                    + (c.s ? ' Supplies: ' + c.s + '.' : '')
-                + '</p></div></div>'
+                + '<div class="fold' + (o ? ' on' : '') + '"><div>'
+                    + '<p>'
+                        + c.e
+                        + (c.p ? '. Makipag-ugnayan: ' + c.p : '') + '.'
+                        + (c.f ? ' ' + c.f + '.' : '')
+                        + (c.s ? ' Suplay: ' + c.s + '.' : '')
+                    + '</p>'
+                    + (isOff
+                        ? '<div class="rw" style="margin-top:10px;gap:8px;flex-wrap:wrap">'
+                            + '<label style="font-size:13px;color:var(--mute);white-space:nowrap;margin:auto 0">I-update ang bilang ng tao:</label>'
+                            + '<input type="number" min="0" max="' + c.c + '" value="' + c.o + '" id="socc-' + i + '"'
+                                + ' style="width:80px;padding:4px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--s2);color:var(--ink);font-size:14px">'
+                            + '<button class="btn s" data-a="upd-shelter" data-v="' + i + '">I-save</button>'
+                          + '</div>'
+                        : '')
+                + '</div></div>'
               + '</div>';
             }).join('')
       + '</div>';
@@ -887,32 +914,29 @@
   function sosForm() {
     dlg(
       '<header><h3>' + T('sos') + '</h3>' + xb() + '</header>'
-      + (S.net
-          ? '<p class="mute" style="width:100%">Press and hold the button for 1 second.</p>'
-          : '<p class="mute" style="width:100%"><b>No signal.</b> Hold to save your SOS. It sends the moment signal returns, or send it by SMS now.</p>')
+      + '<p class="mute" style="width:100%">Pindutin at hawakan ang pindutan ng 1 segundo para magpadala ng SOS.</p>'
       + '<div class="hb">'
           + '<svg viewBox="0 0 100 100" aria-hidden="true">'
               + '<circle class="tr" cx="50" cy="50" r="46"/>'
               + '<circle id="ring" cx="50" cy="50" r="46" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '"/>'
           + '</svg>'
-          + '<button id="hold" aria-label="Hold to send SOS">Hold</button>'
+          + '<button id="hold" aria-label="Hawakan para magpadala ng SOS">Hawakan</button>'
       + '</div>'
       + '<div class="stp">'
-          + '<button data-a="m" aria-label="Fewer people">&minus;</button>'
-          + '<output id="pp">' + n + (n === 1 ? ' person' : ' people') + '</output>'
-          + '<button data-a="p" aria-label="More people">+</button>'
+          + '<button data-a="m" aria-label="Bawasan">&minus;</button>'
+          + '<output id="pp">' + n + (n === 1 ? ' tao' : ' tao') + '</output>'
+          + '<button data-a="p" aria-label="Dagdagan">+</button>'
       + '</div>'
-      + '<div class="chips" role="group" aria-label="Flood depth">'
-          + ['Ankle', 'Knee', 'Waist', 'Chest or higher'].map(function (d) {
+      + '<div class="chips" role="group" aria-label="Lalim ng baha">'
+          + ['Bukung-bukong', 'Tuhod', 'Baywang', 'Dibdib o mas mataas'].map(function (d) {
               return '<button class="chp" data-a="dep" data-v="' + d + '" aria-pressed="' + (d === dep) + '">' + d + '</button>';
             }).join('')
       + '</div>'
-      + '<input class="fi" type="tel" placeholder="Your phone number (optional)" aria-label="Your phone number">'
-      + '<p class="dim" style="font-size:13px">Using your location, accurate to 12 m</p>'
+      + '<input class="fi" type="tel" id="sos-phone" placeholder="Iyong numero ng telepono (opsyonal)" aria-label="Numero ng telepono">'
+      + '<p class="dim" style="font-size:13px">Gagamitin ang iyong lokasyon para sa rescue.</p>'
       + '<div style="display:flex;gap:8px;width:100%">'
-          + '<a class="btn o" style="flex:1" href="tel:911">' + ic('phone') + 'Call 911</a>'
-          + '<button class="btn ' + (S.net ? 'o' : '') + '" style="flex:1" data-a="toast"'
-              + ' data-v="Opening your messages with the SOS text ready">SMS</button>'
+          + '<a class="btn o" style="flex:1" href="tel:911">' + ic('phone') + 'Tumawag sa 911</a>'
+          + '<button class="btn o" style="flex:1" data-a="sos-sms">Mag-SMS</button>'
       + '</div>'
     );
 
@@ -950,50 +974,90 @@
 
   function sent() {
     try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
-    var q = !S.net;
+
+    // Build SOS details
+    var phoneEl = $('#sos-phone');
+    var phone   = phoneEl ? phoneEl.value.trim() : '';
+    var title   = 'SOS: ' + n + ' tao, baha sa ' + dep.toLowerCase();
+    var desc    = 'Bilang ng tao: ' + n + '. Lalim ng baha: ' + dep + '.'
+                + (phone ? ' Telepono: ' + phone : '');
+    var locStr  = (_userLat !== null)
+      ? 'Lat ' + _userLat.toFixed(5) + ', Lon ' + _userLon.toFixed(5)
+      : 'Dalongue, Santa Barbara';
+
+    // Show confirmation dialog immediately (don't wait for network)
     dlg(
-      '<header><h3>' + (q ? 'SOS saved' : 'SOS sent') + '</h3>' + xb() + '</header>'
+      '<header><h3>SOS Naipadala</h3>' + xb() + '</header>'
       + '<img src="' + LOGO + '" alt="" style="width:64px;height:64px;border-radius:50%">'
-      + '<p class="mute" style="text-align:center">'
-          + (q ? 'Waiting for signal. It will send automatically.' : 'Help is being arranged. Stay where it is safe.')
-      + '</p>'
-      + '<p class="mono dim" style="font-size:13px">AGAP-2310-0417, '
-          + n + (n === 1 ? ' person' : ' people') + ', water ' + dep.toLowerCase()
-      + '</p>'
-      + (q
-          ? '<ul class="tl"><li class="d2">Saved on this phone</li><li>Sending when signal returns</li></ul>'
-            + '<button class="btn w" data-a="toast" data-v="Opening your messages with the SOS text ready">Send by SMS now</button>'
-          : '<ul class="tl">'
-              + '<li id="s1">Received</li>'
-              + '<li id="s2">Seen by your barangay</li>'
-              + '<li id="s3">Help on the way</li>'
-            + '</ul>')
-      + '<a class="btn ' + (q ? 'o ' : '') + 'w" href="tel:911">' + ic('phone') + 'Call 911</a>'
-      + '<button class="ul" data-a="safe">I\'m safe, cancel this SOS</button>'
+      + '<p class="mute" style="text-align:center">Inaaayos na ang tulong. Manatili sa ligtas na lugar.</p>'
+      + '<p class="mono dim" style="font-size:13px" id="sos-ref">Nagpapadala…</p>'
+      + '<ul class="tl">'
+          + '<li id="s1">Natanggap</li>'
+          + '<li id="s2">Nakita ng iyong barangay</li>'
+          + '<li id="s3">Tulong paparating</li>'
+      + '</ul>'
+      + '<a class="btn w" href="tel:911">' + ic('phone') + 'Tumawag sa 911</a>'
+      + '<button class="ul" data-a="safe">Ligtas na ako, kanselahin ang SOS</button>'
     );
 
+    // Animate the status steps
     tm.forEach(clearTimeout);
-    if (!q) {
-      tm = [300, 2500, 5000].map(function (d, i) {
-        return setTimeout(function () {
-          var el = $('#s' + (i + 1));
-          if (el) el.classList.add('d2');
-        }, d);
+    tm = [300, 2500, 5000].map(function (d, i) {
+      return setTimeout(function () {
+        var el = $('#s' + (i + 1));
+        if (el) el.classList.add('d2');
+      }, d);
+    });
+
+    // POST to database
+    fetch('api/reports.php', {
+      method:      'POST',
+      credentials: 'same-origin',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({
+        title:       title,
+        description: desc,
+        location:    locStr,
+        is_sos:      1
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var refEl = $('#sos-ref');
+        if (refEl) {
+          refEl.textContent = data.ok
+            ? 'Ref #' + data.id + ' · ' + n + ' tao · ' + dep
+            : 'Nai-save nang lokal — ipapadala kapag may koneksyon.';
+        }
+        // Refresh reports list for officials
+        fetchReports();
+      })
+      .catch(function () {
+        var refEl = $('#sos-ref');
+        if (refEl) refEl.textContent = 'Nai-save nang lokal — ipapadala kapag may koneksyon.';
       });
-    }
   }
 
   function repForm() {
+    var locStr = (_userLat !== null)
+      ? _userLat.toFixed(4) + ', ' + _userLon.toFixed(4)
+      : 'Dalongue, Santa Barbara';
+
     dlg(
-      '<header><h3>Report incident</h3>' + xb() + '</header>'
-      + '<div class="chips" style="width:100%" role="group" aria-label="Type">'
-          + ['Flood', 'Medical', 'Relief', 'Debris'].map(function (t, i) {
+      '<header><h3>Mag-ulat ng Insidente</h3>' + xb() + '</header>'
+      + '<div class="chips" style="width:100%" role="group" aria-label="Uri">'
+          + ['Baha', 'Medikal', 'Relief', 'Debris'].map(function (t, i) {
               return '<button class="chp" data-a="rt" aria-pressed="' + (i === 0) + '">' + t + '</button>';
             }).join('')
       + '</div>'
-      + '<input class="fi" placeholder="What is happening?" aria-label="Details">'
-      + '<p class="dim" style="width:100%;font-size:13px">Your location is added automatically.</p>'
-      + '<button class="btn ac w" data-a="rsend">Send report</button>'
+      + '<input class="fi" id="rep-title" placeholder="Ano ang nangyayari?" aria-label="Pamagat" required>'
+      + '<textarea class="fi" id="rep-desc" placeholder="Ilarawan ang sitwasyon (opsyonal)" aria-label="Paglalarawan" rows="3" style="resize:vertical"></textarea>'
+      + '<div style="width:100%">'
+          + '<label style="font-size:12px;color:var(--mute);display:block;margin-bottom:4px">Lokasyon</label>'
+          + '<input class="fi" id="rep-loc" value="' + locStr + '" aria-label="Lokasyon" style="margin:0">'
+      + '</div>'
+      + '<p class="dim" style="width:100%;font-size:12px;margin-top:4px">Maaaring baguhin ang lokasyon kung kinakailangan.</p>'
+      + '<button class="btn ac w" data-a="rsend">Ipadala ang Ulat</button>'
     );
   }
 
@@ -1027,6 +1091,31 @@
     pin:   function (v)     { S.sel = S.sel == +v ? null : +v; render(); },
     open:  function (v)     { S.open = S.open === v ? null : v; render(); },
     more:  function ()      { S.more = !S.more; render(); },
+    'upd-shelter': function (v) {
+      var idx = +v;
+      var inp = document.getElementById('socc-' + idx);
+      if (!inp) return;
+      var occ = parseInt(inp.value) || 0;
+      var cap = CT[idx].c;
+      if (occ > cap) { toast('Hindi maaaring lampas sa kapasidad (' + cap + ').'); return; }
+      // Need the DB shelter id — stored in CT when fetched
+      var shelterId = CT[idx].dbId;
+      if (!shelterId) { toast('Walang koneksyon sa database.'); return; }
+      fetch('api/admin/shelters.php', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: shelterId, occupancy: occ })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) { toast(data.error || 'Hindi na-update.'); return; }
+          CT[idx].o = occ;
+          fetchShelters();
+          toast('Na-update ang occupancy ng ' + CT[idx].n + '.');
+        })
+        .catch(function () { toast('Walang koneksyon sa server.'); });
+    },
     adv:   function (v) {
       var r = S.reps[v];
       if (!r || r.st >= 3) return;
@@ -1061,11 +1150,39 @@
     pl:    function (v)     { S.pubLv = +v; S.pubC = 0; pubForm(); },
     pubgo: function () {
       if (S.pubLv === 3 && !S.pubC) { S.pubC = 1; pubForm(); return; }
-      A.close();
-      S.lv = S.pubLv;
-      S.pubC = 0;
-      render();
-      toast('Advisory published to Dalongue, Poblacion Sur and Tuliao');
+
+      var lv    = S.pubLv;
+      var notes = T('ti')[lv] + '. ' + T('td')[lv][0];
+
+      // Get current river/wind/rain from LVD so we don't zero them out
+      var river = LVD[lv].m;
+      var wind  = LVD[lv].w;
+      var rain  = LVD[lv].r;
+
+      fetch('api/flood.php', {
+        method:      'POST',
+        credentials: 'same-origin',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ level: lv, river_meters: river, wind_kmh: wind, rain_mmh: rain, notes: notes })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          A.close();
+          S.lv   = lv;
+          S.pubC = 0;
+          render();
+          toast(data.ok
+            ? 'Abiso nailabas — Antas ' + lv + ' para sa Dalongue, Poblacion Sur at Tuliao'
+            : 'Na-update nang lokal lamang. ' + (data.error || ''));
+        })
+        .catch(function () {
+          // Offline — still update locally
+          A.close();
+          S.lv   = lv;
+          S.pubC = 0;
+          render();
+          toast('Walang koneksyon — na-update nang lokal lamang.');
+        });
     },
     close: function () {
       hx();
@@ -1074,11 +1191,11 @@
     },
     m: function () {
       n = Math.max(1, n - 1);
-      $('#pp').textContent = n + (n === 1 ? ' person' : ' people');
+      $('#pp').textContent = n + ' tao';
     },
     p: function () {
       n = Math.min(20, n + 1);
-      $('#pp').textContent = n + (n === 1 ? ' person' : ' people');
+      $('#pp').textContent = n + ' tao';
     },
     dep: function (v) {
       dep = v;
@@ -1093,14 +1210,18 @@
       el.setAttribute('aria-pressed', 'true');
     },
     rsend: function () {
-      var input = document.querySelector('#dlg .fi');
-      var title = input ? input.value.trim() : '';
+      var titleEl = document.getElementById('rep-title');
+      var descEl  = document.getElementById('rep-desc');
+      var locEl   = document.getElementById('rep-loc');
+      var title   = titleEl ? titleEl.value.trim() : '';
+      var desc    = descEl  ? descEl.value.trim()  : '';
+      var loc     = locEl   ? locEl.value.trim()   : '';
       if (!title) { toast('Ilarawan ang insidente.'); return; }
       fetch('api/reports.php', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title, is_sos: 0 })
+        body: JSON.stringify({ title: title, description: desc, location: loc, is_sos: 0 })
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -1112,7 +1233,16 @@
     },
     safe: function () {
       A.close();
-      toast('SOS cancelled. Your barangay was told you\'re safe.');
+      toast('SOS nakansela. Inabisuhan ang iyong barangay na ligtas ka na.');
+    },
+    'sos-sms': function () {
+      var body = encodeURIComponent(
+        'SOS AGAPALERT: ' + n + ' tao nangangailangan ng tulong. '
+        + 'Lalim ng baha: ' + dep + '. '
+        + (_userLat !== null ? 'Lokasyon: ' + _userLat.toFixed(5) + ',' + _userLon.toFixed(5) : 'Dalongue, Santa Barbara')
+        + '. Mangyaring sagutin agad.'
+      );
+      window.open('sms:+639175082024?body=' + body);
     }
   };
 
@@ -1246,6 +1376,15 @@
   /* ── Initial render ──────────────────────────────────────────────────────── */
   /* ── Live data fetch ─────────────────────────────────────────────────────── */
 
+  var _lastRefresh = null;
+  var _dataLoaded  = false;  // true once first fetch cycle completes
+
+  function _updateRefreshTime() {
+    _lastRefresh = new Date();
+    var el = document.getElementById('last-refresh');
+    if (el) el.textContent = _lastRefresh.toLocaleTimeString('fil-PH', { hour: '2-digit', minute: '2-digit' });
+  }
+
   function fetchFloodLevel() {
     fetch('api/flood.php', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
@@ -1259,6 +1398,8 @@
         if (f.river_meters) LVD[lv].m = parseFloat(f.river_meters);
         if (f.wind_kmh)     LVD[lv].w = parseFloat(f.wind_kmh);
         if (f.rain_mmh)     LVD[lv].r = parseFloat(f.rain_mmh);
+        _updateRefreshTime();
+        _dataLoaded = true;
         if (changed && S.tab === 'radar') render();
         else if (S.tab === 'radar') {
           // Re-render just the band without full page re-render
@@ -1276,6 +1417,7 @@
         // Map DB shelters onto the CT array in order
         data.shelters.forEach(function (s, i) {
           if (!CT[i]) return;
+          CT[i].dbId = parseInt(s.id);
           CT[i].c = parseInt(s.capacity)  || CT[i].c;
           CT[i].o = parseInt(s.occupancy) || 0;
           if (s.contact) CT[i].p = s.contact;

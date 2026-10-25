@@ -27,9 +27,9 @@
   /* ── Header chip ─────────────────────────────────────────────────────────── */
   var chip = document.getElementById('user-chip');
   document.getElementById('user-role').textContent =
-    user.role === 'admin'    ? 'Administrator' :
-    user.role === 'official' ? (user.status === 'pending' ? 'Official (pending)' : 'Barangay official') :
-    'Resident';
+    user.role === 'admin'    ? 'Administrador' :
+    user.role === 'official' ? (user.status === 'pending' ? 'Opisyal (naghihintay)' : 'Opisyal ng Barangay') :
+    'Residente';
   chip.style.display = 'flex';
 
   document.getElementById('signout-btn').addEventListener('click', function () {
@@ -112,7 +112,7 @@
     var isAdmin = user.role === 'admin';
     var isOff   = user.role === 'official';
     var isPend  = isOff && user.status === 'pending';
-    badge.textContent = isAdmin ? 'Administrator' : isPend ? 'Official — pending' : isOff ? 'Barangay official' : 'Resident';
+    badge.textContent = isAdmin ? 'Administrador' : isPend ? 'Opisyal — naghihintay' : isOff ? 'Opisyal ng Barangay' : 'Residente';
     badge.className   = 'role-badge ' + (isAdmin ? 'role-admin' : isPend ? 'role-pending' : isOff ? 'role-official' : 'role-resident');
 
     document.getElementById('pending-notice').style.display  = isPend             ? '' : 'none';
@@ -130,7 +130,7 @@
   document.getElementById('avatar-input').addEventListener('change', function () {
     var file = this.files[0];
     if (!file) return;
-    if (file.size > 4 * 1024 * 1024) { alert('Image must be under 4 MB.'); return; }
+    if (file.size > 4 * 1024 * 1024) { alert('Ang larawan ay dapat wala pang 4 MB.'); return; }
 
     var formData = new FormData();
     formData.append('avatar', file);
@@ -138,13 +138,13 @@
     fetch('api/profile/avatar.php', { method: 'POST', credentials: 'same-origin', body: formData })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (!data.ok) { alert(data.error || 'Upload failed.'); return; }
+        if (!data.ok) { alert(data.error || 'Nabigo ang pag-upload.'); return; }
         user.avatar_path = data.avatar_path;
         localStorage.setItem('agapalert_user', JSON.stringify(user));
         populate();
         updateChipAvatar();
       })
-      .catch(function () { alert('Upload failed. Check your connection.'); });
+      .catch(function () { alert('Nabigo ang pag-upload. Suriin ang iyong koneksyon.'); });
 
     this.value = '';
   });
@@ -192,10 +192,10 @@
     var brgy  = document.getElementById('pf-brgy').value;
     var ok    = true;
 
-    if (name.length < 2) { showErr('name', 'Enter your full name.'); ok = false; }
-    if (phone && !/^[0-9+()\-\s]{7,40}$/.test(phone)) { showErr('phone', 'Mobile number looks invalid.'); ok = false; }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('email', 'Email address looks invalid.'); ok = false; }
-    if (!brgy) { showErr('brgy', 'Select your barangay.'); ok = false; }
+    if (name.length < 2) { showErr('name', 'Ilagay ang iyong buong pangalan.'); ok = false; }
+    if (phone && !/^[0-9+()\-\s]{7,40}$/.test(phone)) { showErr('phone', 'Mukhang mali ang numero ng mobile.'); ok = false; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('email', 'Mukhang mali ang email address.'); ok = false; }
+    if (!brgy) { showErr('brgy', 'Piliin ang iyong barangay.'); ok = false; }
     if (!ok) return;
 
     var btn  = document.getElementById('save-info');
@@ -220,7 +220,7 @@
         updateChipAvatar();
         flashStatus('info-saved');
       })
-      .catch(function () { btn.disabled = false; showErr('name', 'Could not reach the server.'); });
+      .catch(function () { btn.disabled = false; showErr('name', 'Hindi ma-reach ang server.'); });
   });
 
   /* ── Save password ───────────────────────────────────────────────────────── */
@@ -230,8 +230,8 @@
     var pw2 = document.getElementById('pf-pw2').value;
     var ok  = true;
 
-    if (!pw1 || pw1.length < 8) { showErr('pw1', 'Must be at least 8 characters.'); ok = false; }
-    if (pw1 !== pw2)             { showErr('pw2', 'Passwords do not match.');        ok = false; }
+    if (!pw1 || pw1.length < 8) { showErr('pw1', 'Hindi bababa sa 8 na character.'); ok = false; }
+    if (pw1 !== pw2)             { showErr('pw2', 'Hindi magkatugma ang mga password.'); ok = false; }
     if (!ok) return;
 
     var btn  = document.getElementById('save-pw');
@@ -254,7 +254,7 @@
         document.getElementById('pf-pw2').value = '';
         flashStatus('pw-saved');
       })
-      .catch(function () { btn.disabled = false; showErr('pw1', 'Could not reach the server.'); });
+      .catch(function () { btn.disabled = false; showErr('pw1', 'Hindi ma-reach ang server.'); });
   });
 
   /* ── Sign out ────────────────────────────────────────────────────────────── */
@@ -268,7 +268,7 @@
 
   /* ── Delete account ──────────────────────────────────────────────────────── */
   document.getElementById('delete-account').addEventListener('click', function () {
-    if (!confirm('Delete your account? This cannot be undone.')) return;
+    if (!confirm('Burahin ang iyong account? Hindi ito maaaring ibalik.')) return;
     fetch('api/logout.php', { method: 'POST', credentials: 'same-origin' })
       .finally(function () {
         localStorage.removeItem('agapalert_user');

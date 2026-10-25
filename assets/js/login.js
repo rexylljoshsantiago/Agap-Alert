@@ -1,5 +1,5 @@
 /**
- * login.js — signs the user in via api/login.php
+ * login.js — nagsa-sign in ang user sa pamamagitan ng api/login.php
  */
 
 function showError(msg) {
@@ -11,7 +11,7 @@ function showError(msg) {
 function setLoading(loading) {
   var btn = document.querySelector('#login-form button[type="submit"]');
   btn.disabled    = loading;
-  btn.textContent = loading ? 'Signing in…' : 'Sign in';
+  btn.textContent = loading ? 'Nagsa-sign in…' : 'Mag-sign in';
 }
 
 document.getElementById('login-form').addEventListener('submit', function (e) {
@@ -22,7 +22,7 @@ document.getElementById('login-form').addEventListener('submit', function (e) {
   var password = document.getElementById('password').value;
 
   if (!email || !password) {
-    showError('Email and password are required.');
+    showError('Kinakailangan ang email at password.');
     return;
   }
 
@@ -37,24 +37,22 @@ document.getElementById('login-form').addEventListener('submit', function (e) {
     .then(function (res) { return res.json(); })
     .then(function (data) {
       if (!data.ok) {
-        showError(data.error || 'Incorrect email or password.');
+        showError(data.error || 'Mali ang email o password.');
         setLoading(false);
         return;
       }
 
-      // Store user in localStorage as a cache for instant page loads.
-      // The real source of truth is the PHP session.
       localStorage.setItem('agapalert_user', JSON.stringify(data.user));
 
       var msg = data.user.role === 'admin'
-        ? 'Signed in as administrator. Welcome back.'
-        : 'Signed in. Welcome back to AgapAlert.';
+        ? 'Naka-sign in bilang administrador. Maligayang pagbabalik.'
+        : 'Naka-sign in na. Maligayang pagbabalik sa AgapAlert.';
       localStorage.setItem('agapalert_flash', JSON.stringify({ type: 'success', message: msg }));
 
       window.location.href = 'index.html';
     })
     .catch(function () {
-      showError('Could not reach the server. Check your connection.');
+      showError('Hindi ma-reach ang server. Suriin ang iyong koneksyon.');
       setLoading(false);
     });
 });

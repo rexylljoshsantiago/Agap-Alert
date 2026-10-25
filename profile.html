@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="fil" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>My Profile | AgapAlert</title>
+  <title>Aking Profile | AgapAlert</title>
   <link rel="icon" href="assets/img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,7 +47,7 @@
               </a>
               <button class="settings-item settings-item-danger" id="signout-btn" type="button">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Sign out
+                Mag-sign out
               </button>
             </div>
           </div>
@@ -65,23 +65,23 @@
 
     <a class="profile-back" href="index.html">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Back to dashboard
+      Bumalik sa dashboard
     </a>
 
     <!-- Avatar -->
     <div class="avatar-card">
       <div class="avatar-wrap">
         <div class="avatar-circle">
-          <div class="avatar" id="avatar-el" title="Change photo">
+          <div class="avatar" id="avatar-el" title="Baguhin ang larawan">
             <span id="avatar-initial">?</span>
           </div>
-          <label class="avatar-edit-btn" for="avatar-input" title="Upload photo" aria-label="Upload profile photo">
+          <label class="avatar-edit-btn" for="avatar-input" title="Mag-upload ng larawan" aria-label="Mag-upload ng profile photo">
             <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </label>
-          <input type="file" id="avatar-input" accept="image/*" style="display:none" aria-label="Upload profile photo">
+          <input type="file" id="avatar-input" accept="image/*" style="display:none" aria-label="Mag-upload ng profile photo">
         </div>
-        <p class="avatar-hint">Click to change</p>
-        <button class="avatar-remove" id="avatar-remove">Remove photo</button>
+        <p class="avatar-hint">I-click para baguhin</p>
+        <button class="avatar-remove" id="avatar-remove">Alisin ang larawan</button>
       </div>
       <div class="avatar-info">
         <h2 id="display-name">—</h2>
@@ -93,25 +93,25 @@
     <!-- Personal information -->
     <div class="form-card">
       <div class="form-card-head">
-        <h3>Personal information</h3>
-        <p>Update your name, contact details and barangay.</p>
+        <h3>Personal na impormasyon</h3>
+        <p>I-update ang iyong pangalan, contact details, at barangay.</p>
       </div>
       <div class="form-card-body">
 
         <div class="pf-field">
-          <label for="pf-name">Full name</label>
+          <label for="pf-name">Buong pangalan</label>
           <input class="pf-input" id="pf-name" type="text" autocomplete="name">
           <span class="pf-error" id="err-name"></span>
         </div>
 
         <div class="row-2">
           <div class="pf-field">
-            <label for="pf-phone">Mobile number</label>
+            <label for="pf-phone">Numero ng mobile</label>
             <input class="pf-input" id="pf-phone" type="tel" autocomplete="tel" placeholder="+63 9XX XXX XXXX">
             <span class="pf-error" id="err-phone"></span>
           </div>
           <div class="pf-field">
-            <label for="pf-email">Email <span>(optional)</span></label>
+            <label for="pf-email">Email <span>(opsyonal)</span></label>
             <input class="pf-input" id="pf-email" type="email" autocomplete="email">
             <span class="pf-error" id="err-email"></span>
           </div>
@@ -120,65 +120,54 @@
         <div class="pf-field">
           <label for="pf-brgy">Barangay</label>
           <select class="pf-input" id="pf-brgy">
-            <option value="">Select your barangay</option>
+            <option value="">Piliin ang iyong barangay</option>
             <optgroup label="Santa Barbara, Pangasinan">
               <option value="1">Dalongue</option>
               <option value="2">Poblacion Sur</option>
               <option value="3">Tuliao</option>
-            </optgroup>
-            <optgroup label="Marikina City, Metro Manila">
-              <option value="4">Sto. Niño</option>
-              <option value="5">Concepcion Uno</option>
-              <option value="6">San Roque</option>
-            </optgroup>
-            <optgroup label="Quezon City, Metro Manila">
-              <option value="7">Loyola Heights</option>
-            </optgroup>
-            <optgroup label="Pasig City, Metro Manila">
-              <option value="8">Santolan</option>
             </optgroup>
           </select>
           <span class="pf-error" id="err-brgy"></span>
         </div>
 
         <div id="pending-notice" class="pf-notice pf-notice-warn" style="display:none">
-          Your official access request is under review. You have resident access in the meantime.
+          Ang iyong kahilingan para sa opisyal na access ay nasa ilalim ng pagsusuri. Mayroon kang resident access sa ngayon.
         </div>
         <div id="official-notice" class="pf-notice pf-notice-ok" style="display:none">
-          Official access active — you can manage your barangay's evacuation centers, stock and reports.
+          Aktibo ang opisyal na access — maaari kang mamahala ng mga evacuation center, stock, at mga ulat ng iyong barangay.
         </div>
 
       </div>
       <div class="pf-actions">
-        <button class="pf-btn pf-btn-primary" id="save-info">Save changes</button>
-        <a class="pf-btn pf-btn-ghost" href="index.html">Cancel</a>
-        <span class="pf-save-status" id="info-saved">✓ Saved</span>
+        <button class="pf-btn pf-btn-primary" id="save-info">I-save ang mga pagbabago</button>
+        <a class="pf-btn pf-btn-ghost" href="index.html">Kanselahin</a>
+        <span class="pf-save-status" id="info-saved">✓ Nai-save</span>
       </div>
     </div>
 
     <!-- Change password -->
     <div class="form-card">
       <div class="form-card-head">
-        <h3>Change password</h3>
-        <p>Leave blank to keep your current password.</p>
+        <h3>Baguhin ang password</h3>
+        <p>Iwanang blangko para mapanatili ang iyong kasalukuyang password.</p>
       </div>
       <div class="form-card-body">
         <div class="row-2">
           <div class="pf-field">
-            <label for="pf-pw1">New password</label>
-            <input class="pf-input" id="pf-pw1" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+            <label for="pf-pw1">Bagong password</label>
+            <input class="pf-input" id="pf-pw1" type="password" autocomplete="new-password" placeholder="Hindi bababa sa 8 character">
             <span class="pf-error" id="err-pw1"></span>
           </div>
           <div class="pf-field">
-            <label for="pf-pw2">Confirm new password</label>
+            <label for="pf-pw2">Kumpirmahin ang bagong password</label>
             <input class="pf-input" id="pf-pw2" type="password" autocomplete="new-password">
             <span class="pf-error" id="err-pw2"></span>
           </div>
         </div>
       </div>
       <div class="pf-actions">
-        <button class="pf-btn pf-btn-primary" id="save-pw">Update password</button>
-        <span class="pf-save-status" id="pw-saved">✓ Password updated</span>
+        <button class="pf-btn pf-btn-primary" id="save-pw">I-update ang password</button>
+        <span class="pf-save-status" id="pw-saved">✓ Na-update ang password</span>
       </div>
     </div>
 
@@ -186,11 +175,11 @@
     <div class="form-card danger-zone">
       <div class="form-card-head">
         <h3>Account</h3>
-        <p>Sign out of this device or delete your account.</p>
+        <p>Mag-sign out sa device na ito o burahin ang iyong account.</p>
       </div>
       <div class="form-card-body" style="flex-direction:row;flex-wrap:wrap;gap:0.75rem">
-        <button class="pf-btn pf-btn-ghost" id="signout-page">Sign out</button>
-        <button class="pf-btn pf-btn-danger" id="delete-account">Delete account</button>
+        <button class="pf-btn pf-btn-ghost" id="signout-page">Mag-sign out</button>
+        <button class="pf-btn pf-btn-danger" id="delete-account">Burahin ang account</button>
       </div>
     </div>
 

@@ -105,11 +105,11 @@
   function renderCodes() {
     var tbody = document.getElementById('code-tbody');
     var empty = document.getElementById('code-empty');
-    tbody.innerHTML = '<tr><td colspan="6" style="padding:1.2rem;color:var(--dim)">Loading…</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:1.2rem;color:var(--dim)">Kumukuha…</td></tr>';
 
     api('api/admin/codes.php')
       .then(function (data) {
-        if (!data.ok) { toast('Failed to load codes.'); return; }
+        if (!data.ok) { toast('Hindi ma-load ang mga code.'); return; }
         var codes = data.codes;
         if (codes.length === 0) {
           tbody.innerHTML = '';
@@ -119,21 +119,21 @@
         empty.style.display = 'none';
         tbody.innerHTML = codes.map(function (c) {
           var badgeCls = c.status === 'unused' ? 'badge-unused' : c.status === 'used' ? 'badge-used' : 'badge-expired';
-          var badgeTxt = c.status === 'unused' ? 'Unused'       : c.status === 'used' ? 'Used'       : 'Expired';
+          var badgeTxt = c.status === 'unused' ? 'Hindi pa ginamit' : c.status === 'used' ? 'Ginamit na' : 'Nag-expire na';
           return '<tr>'
-            + '<td><button class="code-mono" title="Click to copy" data-copy="' + c.code + '">' + c.code + '</button></td>'
+            + '<td><button class="code-mono" title="I-click para kopyahin" data-copy="' + c.code + '">' + c.code + '</button></td>'
             + '<td style="color:var(--mute)">' + (c.note || '<span style="color:var(--dim)">—</span>') + '</td>'
             + '<td style="color:var(--dim);font-size:13px">' + c.created_at.slice(0, 16).replace('T', ' ') + '</td>'
             + '<td><span class="badge ' + badgeCls + '">' + badgeTxt + '</span></td>'
             + '<td style="color:var(--dim);font-size:13px">' + (c.used_by_name || '—') + '</td>'
-            + '<td>' + (c.status === 'unused' ? '<button class="btn-revoke" data-id="' + c.id + '">Revoke</button>' : '') + '</td>'
+            + '<td>' + (c.status === 'unused' ? '<button class="btn-revoke" data-id="' + c.id + '">Bawiin</button>' : '') + '</td>'
           + '</tr>';
         }).join('');
 
         tbody.querySelectorAll('[data-copy]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             navigator.clipboard.writeText(this.dataset.copy)
-              .then(function () { toast('Code copied to clipboard.'); });
+              .then(function () { toast('Na-kopya ang code sa clipboard.'); });
           });
         });
 
@@ -141,14 +141,14 @@
           btn.addEventListener('click', function () {
             api('api/admin/codes.php?id=' + this.dataset.id, { method: 'DELETE' })
               .then(function (data) {
-                if (!data.ok) { toast(data.error || 'Could not revoke code.'); return; }
+                if (!data.ok) { toast(data.error || 'Hindi mabawi ang code.'); return; }
                 renderCodes();
-                toast('Code revoked.');
+                toast('Nabawi ang code.');
               });
           });
         });
       })
-      .catch(function () { toast('Could not load codes.'); });
+      .catch(function () { toast('Hindi ma-load ang mga code.'); });
   }
 
   document.getElementById('gen-btn').addEventListener('click', function () {
@@ -163,12 +163,12 @@
     })
       .then(function (data) {
         btn.disabled = false;
-        if (!data.ok) { toast(data.error || 'Failed to generate code.'); return; }
+        if (!data.ok) { toast(data.error || 'Hindi nagawa ang code.'); return; }
         document.getElementById('gen-note').value = '';
         renderCodes();
-        toast('Code ' + data.code + ' generated. Click to copy.');
+        toast('Code ' + data.code + ' nagawa na. I-click para kopyahin.');
       })
-      .catch(function () { btn.disabled = false; toast('Could not reach server.'); });
+      .catch(function () { btn.disabled = false; toast('Hindi ma-reach ang server.'); });
   });
 
   /* ── Pending approvals ───────────────────────────────────────────────────── */
@@ -176,19 +176,19 @@
     var el    = document.getElementById('pending-list');
     var count = document.getElementById('pending-count');
     var badge = document.getElementById('tab-pending-count');
-    el.innerHTML = '<div class="empty">Loading…</div>';
+    el.innerHTML = '<div class="empty">Kumukuha…</div>';
 
     api('api/admin/pending.php')
       .then(function (data) {
-        if (!data.ok) { toast('Failed to load pending requests.'); return; }
+        if (!data.ok) { toast('Hindi ma-load ang mga kahilingan.'); return; }
         var pending = data.pending;
-        count.textContent = pending.length + ' pending';
+        count.textContent = pending.length + ' naghihintay';
         count.className   = 'badge ' + (pending.length > 0 ? 'badge-pending' : 'badge-used');
         badge.textContent = pending.length;
         badge.className   = 'tab-badge' + (pending.length > 0 ? ' on' : '');
 
         if (pending.length === 0) {
-          el.innerHTML = '<div class="empty">No pending requests.</div>';
+          el.innerHTML = '<div class="empty">Walang mga kahilingang naghihintay.</div>';
           return;
         }
 
@@ -202,8 +202,8 @@
                 + '</span>'
             + '</div>'
             + '<div class="approval-actions">'
-                + '<button class="btn-approve" data-id="' + u.id + '">Approve</button>'
-                + '<button class="btn-reject"  data-id="' + u.id + '">Reject</button>'
+                + '<button class="btn-approve" data-id="' + u.id + '">Aprubahan</button>'
+                + '<button class="btn-reject"  data-id="' + u.id + '">Tanggihan</button>'
             + '</div>'
           + '</div>';
         }).join('');
@@ -216,8 +216,8 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user_id: id, action: 'approve' }),
             }).then(function (data) {
-              if (!data.ok) { toast(data.error || 'Failed.'); btn.disabled = false; return; }
-              renderPending(); renderOfficials(); toast('Official access granted.');
+              if (!data.ok) { toast(data.error || 'Nabigo.'); btn.disabled = false; return; }
+              renderPending(); renderOfficials(); toast('Ibinigay na ang opisyal na access.');
             });
           });
         });
@@ -230,29 +230,29 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user_id: id, action: 'reject' }),
             }).then(function (data) {
-              if (!data.ok) { toast(data.error || 'Failed.'); btn.disabled = false; return; }
-              renderPending(); toast('Request rejected.');
+              if (!data.ok) { toast(data.error || 'Nabigo.'); btn.disabled = false; return; }
+              renderPending(); toast('Tinanggihan ang kahilingan.');
             });
           });
         });
       })
-      .catch(function () { toast('Could not load pending requests.'); });
+      .catch(function () { toast('Hindi ma-load ang mga kahilingan.'); });
   }
 
   /* ── Officials ───────────────────────────────────────────────────────────── */
   function renderOfficials() {
     var el      = document.getElementById('officials-list');
     var countEl = document.getElementById('officials-count');
-    el.innerHTML = '<div class="empty">Loading…</div>';
+    el.innerHTML = '<div class="empty">Kumukuha…</div>';
 
     api('api/admin/officials.php')
       .then(function (data) {
-        if (!data.ok) { toast('Failed to load officials.'); return; }
+        if (!data.ok) { toast('Hindi ma-load ang mga opisyal.'); return; }
         var officials = data.officials;
-        countEl.textContent = officials.length + ' official' + (officials.length !== 1 ? 's' : '');
+        countEl.textContent = officials.length + ' opisyal';
 
         if (officials.length === 0) {
-          el.innerHTML = '<div class="empty">No approved officials yet.</div>';
+          el.innerHTML = '<div class="empty">Wala pang mga aprubadong opisyal.</div>';
           return;
         }
 
@@ -268,27 +268,27 @@
                     + (!u.email && u.phone_number ? u.phone_number : '')
                 + '</span>'
             + '</div>'
-            + '<span class="badge badge-active" style="margin-right:0.5rem">Active</span>'
-            + '<button class="btn-revoke" data-id="' + u.id + '">Revoke</button>'
+            + '<span class="badge badge-active" style="margin-right:0.5rem">Aktibo</span>'
+            + '<button class="btn-revoke" data-id="' + u.id + '">Bawiin</button>'
           + '</div>';
         }).join('');
 
         el.querySelectorAll('[data-id]').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            if (!confirm('Revoke official access? This user will revert to resident.')) return;
+            if (!confirm('Bawiin ang opisyal na access? Magiging residente ulit ang user na ito.')) return;
             var id = parseInt(this.dataset.id);
             btn.disabled = true;
             api('api/admin/officials.php', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user_id: id }),
             }).then(function (data) {
-              if (!data.ok) { toast(data.error || 'Failed.'); btn.disabled = false; return; }
-              renderOfficials(); toast('Official access revoked.');
+              if (!data.ok) { toast(data.error || 'Nabigo.'); btn.disabled = false; return; }
+              renderOfficials(); toast('Nabawi ang opisyal na access.');
             });
           });
         });
       })
-      .catch(function () { toast('Could not load officials.'); });
+      .catch(function () { toast('Hindi ma-load ang mga opisyal.'); });
   }
 
   /* ── Flood level ─────────────────────────────────────────────────────────── */

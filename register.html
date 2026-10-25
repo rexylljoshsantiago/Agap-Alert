@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fil">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Create account | AgapAlert</title>
+  <title>Gumawa ng account | AgapAlert</title>
   <link rel="icon" href="assets/img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,25 +18,24 @@
       <img src="assets/img/logo.png" alt="" width="36" height="36">AgapAlert
     </a>
     <div>
-      <h1>Join your barangay's <em>early warning</em> network.</h1>
-      <p>Residents get live alerts, evacuation routes and a one-tap SOS. Officials manage centers, relief stock and incoming reports.</p>
+      <h1>Sumali sa <em>early warning network</em> ng inyong barangay.</h1>
+      <p>Ang mga residente ay tumatanggap ng live na mga alerto, ruta ng paglikas, at one-tap na SOS. Ang mga opisyal ay namamahala ng mga sentro, relief stock, at papasok na mga ulat.</p>
     </div>
 
-    <!-- River gauge (Sinocalan River — 5.82 m, above alert, rising) -->
-    <figure class="gauge" aria-label="River gauge for Sinocalan River - Santa Barbara Bridge Gauge">
+    <figure class="gauge" aria-label="River gauge para sa Sinocalan River - Santa Barbara Bridge Gauge">
       <div class="gauge-tube">
         <div class="gauge-fill gauge-warn" style="height: 74%"></div>
         <span class="gauge-line gauge-line-alert" style="bottom: 66%"></span>
         <span class="gauge-line gauge-line-crit"  style="bottom: 87%"></span>
       </div>
       <div class="gauge-scale">
-        <span style="bottom: 87%">Critical 6.80 m</span>
-        <span style="bottom: 66%">Alert 5.20 m</span>
+        <span style="bottom: 87%">Kritikal 6.80 m</span>
+        <span style="bottom: 66%">Alerto 5.20 m</span>
         <span style="bottom: 0">0 m</span>
       </div>
       <figcaption>
         <strong class="gauge-reading gauge-text-warn">5.82 m</strong>
-        <span>Above alert level, rising at 0.18 m/h</span>
+        <span>Higit sa antas ng alerto, tumataas ng 0.18 m/h</span>
         <small>Sinocalan River - Santa Barbara Bridge Gauge</small>
       </figcaption>
     </figure>
@@ -44,25 +43,25 @@
 
   <section class="auth-form">
     <div class="auth-card">
-      <h2>Create account</h2>
-      <p class="sub">It takes about a minute.</p>
+      <h2>Gumawa ng account</h2>
+      <p class="sub">Mga isang minuto lamang.</p>
 
       <form id="register-form" novalidate>
 
         <div class="field">
-          <label for="full_name">Full name</label>
+          <label for="full_name">Buong pangalan</label>
           <input class="input" id="full_name" name="full_name" autocomplete="name" required>
           <div id="err-full_name" class="error" role="alert"></div>
         </div>
 
         <div class="row-2">
           <div class="field">
-            <label for="phone">Mobile number</label>
+            <label for="phone">Numero ng mobile</label>
             <input class="input" id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="+63 9XX XXX XXXX">
             <div id="err-phone" class="error" role="alert"></div>
           </div>
           <div class="field">
-            <label for="email">Email <span class="field-optional">(optional)</span></label>
+            <label for="email">Email <span class="field-optional">(opsyonal)</span></label>
             <input class="input" id="email" name="email" type="email" autocomplete="email">
             <div id="err-email" class="error" role="alert"></div>
           </div>
@@ -72,7 +71,7 @@
           <label for="barangay_id">Barangay</label>
           <div class="select-wrap">
             <select class="input" id="barangay_id" name="barangay_id" required>
-              <option value="">Select your barangay</option>
+              <option value="">Piliin ang iyong barangay</option>
               <optgroup label="Santa Barbara, Pangasinan">
                 <option value="1">Dalongue</option>
                 <option value="2">Poblacion Sur</option>
@@ -88,23 +87,22 @@
             <label for="password">Password</label>
             <div class="pw-wrap">
               <input class="input" id="password" name="password" type="password" autocomplete="new-password" minlength="8" required>
-              <button type="button" class="pw-toggle" data-target="password" aria-pressed="false">Show</button>
+              <button type="button" class="pw-toggle" data-target="password" aria-pressed="false">Ipakita</button>
             </div>
             <div id="err-password" class="error" role="alert"></div>
           </div>
           <div class="field">
-            <label for="password_confirm">Confirm password</label>
+            <label for="password_confirm">Kumpirmahin ang password</label>
             <input class="input" id="password_confirm" name="password_confirm" type="password" autocomplete="new-password" required>
             <div id="err-password_confirm" class="error" role="alert"></div>
           </div>
         </div>
 
-        <!-- Invite code toggle (for barangay officials) -->
         <div class="field" style="margin-top:0.25rem">
           <label class="invite-toggle" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;user-select:none">
             <input type="checkbox" id="has-invite" style="width:auto;accent-color:var(--accent)">
             <span style="font-size:13.5px;font-weight:500;color:var(--text-2);text-transform:none;letter-spacing:0">
-              I have a barangay official invite code
+              Mayroon akong invite code para sa opisyal ng barangay
             </span>
           </label>
         </div>
@@ -112,17 +110,17 @@
         <div class="field" id="invite-code-field" style="display:none">
           <label for="invite_code">Invite code</label>
           <input class="input" id="invite_code" name="invite_code" type="text" autocomplete="off"
-                 placeholder="e.g. BRGY-XXXX-XXXX" style="font-family:'IBM Plex Mono',monospace;letter-spacing:0.05em">
+                 placeholder="hal. BRGY-XXXX-XXXX" style="font-family:'IBM Plex Mono',monospace;letter-spacing:0.05em">
           <div id="err-invite_code" class="error" role="alert"></div>
           <p style="font-size:12px;color:var(--text-3);margin:0.4rem 0 0">
-            Issued by your system administrator. Your account will be reviewed before official access is granted.
+            Inilabas ng inyong system administrator. Susuriin ang inyong account bago ibigay ang opisyal na access.
           </p>
         </div>
 
-        <button class="btn btn-primary btn-block" type="submit">Create account</button>
+        <button class="btn btn-primary btn-block" type="submit">Gumawa ng account</button>
       </form>
 
-      <p class="auth-alt">Already registered? <a href="login.html">Sign in</a></p>
+      <p class="auth-alt">Rehistrado na? <a href="login.html">Mag-sign in</a></p>
     </div>
   </section>
 </main>

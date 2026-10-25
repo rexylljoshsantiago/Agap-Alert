@@ -451,6 +451,8 @@
   var _shelterMarkers  = [];
   var _floodLayer      = null;
   var _incidentMarkers = [];
+  var _routeLayer      = null;
+  var _userMarker      = null;
 
   // Dalongue, Santa Barbara — fixed map center
   var MAP_CENTER = [15.9650, 120.4150];
@@ -498,6 +500,9 @@
     _updateFloodLayer();
     _updateShelterMarkers();
     if (off()) _updateIncidentMarkers();
+
+    // Ask for location permission on map load
+    requestLocation();
   }
 
   function _updateFloodLayer() {
@@ -594,17 +599,20 @@
       var el = document.getElementById('leaflet-map');
       if (!el) return;
 
-      // If map exists but container was re-created by render(), destroy and reinit
       if (_leafMap) {
         _leafMap.remove();
-        _leafMap = null;
-        _userMarker = null;
-        _shelterMarkers = [];
-        _floodLayer = null;
-        _incidentMarkers = [];
+        _leafMap      = null;
+        _userMarker   = null;
+        _shelterMarkers   = [];
+        _floodLayer       = null;
+        _incidentMarkers  = [];
+        _routeLayer       = null;
       }
 
       initMap();
+
+      // Restore user marker if location was already granted
+      if (_userLat !== null) _updateUserMarker();
     }, 100);
   }
 
@@ -1027,7 +1035,7 @@
     adv:   function (v)     { var r = S.reps[v]; if (r.st < 3) r.st++; render(); },
     zin:   function ()      { if (_leafMap) _leafMap.zoomIn(); },
     zout:  function ()      { if (_leafMap) _leafMap.zoomOut(); },
-    zr:    function ()      { if (_leafMap) _leafMap.setView(MAP_CENTER, MAP_ZOOM); },
+    zr:    function ()      { if (_userLat !== null && _leafMap) { _leafMap.setView([_userLat, _userLon], 16); } else { requestLocation(); if (_leafMap) _leafMap.setView(MAP_CENTER, MAP_ZOOM); } },
     lfl:   function ()      { S.fl  = !S.fl;  _updateFloodLayer(); var b = document.querySelector('[data-a="lfl"]'); if(b) b.setAttribute('aria-pressed', String(S.fl)); },
     linc:  function ()      { S.inc = !S.inc; if(off()) _updateIncidentMarkers(); var b = document.querySelector('[data-a="linc"]'); if(b) b.setAttribute('aria-pressed', String(S.inc)); },
     toast: function (v)     { toast(v); },
@@ -1135,6 +1143,43 @@
   themeBtn.addEventListener('click', function () {
     applyTheme(root.getAttribute('data-theme') !== 'dark');
   });
+
+  /* ── Geolocation ─────────────────────────────────────────────────────────── */
+  var _userLat = null;
+  var _userLon = null;
+
+  function _updateUserMarker() {
+    if (!_leafMap || _userLat === null) return;
+    var userIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 8px rgba(59,130,246,.2)"></div>',
+      iconSize:   [18, 18],
+      iconAnchor: [9, 9]
+    });
+    if (_userMarker) _leafMap.removeLayer(_userMarker);
+    _userMarker = L.marker([_userLat, _userLon], { icon: userIcon, zIndexOffset: 1000 })
+      .addTo(_leafMap)
+      .bindPopup('<b>Your location</b>');
+  }
+
+  function requestLocation() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        _userLat = pos.coords.latitude;
+        _userLon = pos.coords.longitude;
+        if (_leafMap) {
+          _leafMap.setView([_userLat, _userLon], 16);
+          _updateUserMarker();
+        }
+        toast('Location found — showing your position on the map.');
+      },
+      function () {
+        // Denied or unavailable — stay centered on Dalongue, no dot shown
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
   /* ── Weather fetch ───────────────────────────────────────────────────────── */
   // Dalongue, Santa Barbara, Pangasinan coordinates

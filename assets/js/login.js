@@ -1,5 +1,5 @@
 /**
- * login.js — nagsa-sign in ang user sa pamamagitan ng api/login.php
+ * login.js — signs the user in via api/login.php
  */
 
 function showError(msg) {
@@ -11,7 +11,7 @@ function showError(msg) {
 function setLoading(loading) {
   var btn = document.querySelector('#login-form button[type="submit"]');
   btn.disabled    = loading;
-  btn.textContent = loading ? 'Nagsa-sign in…' : 'Mag-sign in';
+  btn.textContent = loading ? 'Signing in…' : 'Sign in';
 }
 
 document.getElementById('login-form').addEventListener('submit', function (e) {
@@ -22,7 +22,7 @@ document.getElementById('login-form').addEventListener('submit', function (e) {
   var password = document.getElementById('password').value;
 
   if (!email || !password) {
-    showError('Kinakailangan ang email at password.');
+    showError('Email and password are required.');
     return;
   }
 
@@ -34,10 +34,10 @@ document.getElementById('login-form').addEventListener('submit', function (e) {
     headers:     { 'Content-Type': 'application/json' },
     body:        JSON.stringify({ email: email, password: password }),
   })
-    .then(function (res) { return res.json().then(function(d){ d._status = res.status; return d; }); })
+    .then(function (res) { return res.json().then(function (d) { d._status = res.status; return d; }); })
     .then(function (data) {
       if (!data.ok) {
-        showError(data.error || 'Mali ang email o password.');
+        showError(data.error || 'Incorrect email or password.');
         setLoading(false);
         return;
       }
@@ -45,14 +45,14 @@ document.getElementById('login-form').addEventListener('submit', function (e) {
       localStorage.setItem('agapalert_user', JSON.stringify(data.user));
 
       var msg = data.user.role === 'admin'
-        ? 'Naka-sign in bilang administrador. Maligayang pagbabalik.'
-        : 'Naka-sign in na. Maligayang pagbabalik sa AgapAlert.';
+        ? 'Signed in as administrator. Welcome back.'
+        : 'Signed in. Welcome back to AgapAlert.';
       localStorage.setItem('agapalert_flash', JSON.stringify({ type: 'success', message: msg }));
 
       window.location.href = 'index.html';
     })
     .catch(function () {
-      showError('Hindi ma-reach ang server. Suriin ang iyong koneksyon.');
+      showError('Could not reach the server. Check your connection.');
       setLoading(false);
     });
 });

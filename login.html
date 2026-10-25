@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fil">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mag-sign in | AgapAlert</title>
+  <title>Sign in | AgapAlert</title>
   <link rel="icon" href="assets/img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,24 +18,24 @@
       <img src="assets/img/logo.png" alt="" width="36" height="36">AgapAlert
     </a>
     <div>
-      <h1>Alamin ang lebel ng ilog <em>bago</em> pa man umabot sa inyong kalye.</h1>
-      <p>Live na pagbabasa ng gauge, kapasidad ng evacuation center, at SOS reports para sa mga barangay sa Pilipinas na malapit sa flood-prone na ilog.</p>
+      <h1>Know the river's level <em>before</em> it reaches your street.</h1>
+      <p>Live gauge readings, evacuation center capacity and SOS reports for Philippine barangays along flood-prone river basins.</p>
     </div>
 
-    <figure class="gauge" aria-label="River gauge para sa Sinocalan River - Santa Barbara Bridge Gauge">
+    <figure class="gauge" aria-label="River gauge for Sinocalan River - Santa Barbara Bridge Gauge">
       <div class="gauge-tube">
         <div class="gauge-fill gauge-warn" style="height: 74%"></div>
         <span class="gauge-line gauge-line-alert" style="bottom: 66%"></span>
         <span class="gauge-line gauge-line-crit"  style="bottom: 87%"></span>
       </div>
       <div class="gauge-scale">
-        <span style="bottom: 87%">Kritikal 6.80 m</span>
-        <span style="bottom: 66%">Alerto 5.20 m</span>
+        <span style="bottom: 87%">Critical 6.80 m</span>
+        <span style="bottom: 66%">Alert 5.20 m</span>
         <span style="bottom: 0">0 m</span>
       </div>
       <figcaption>
         <strong class="gauge-reading gauge-text-warn">5.82 m</strong>
-        <span>Higit sa antas ng alerto, tumataas ng 0.18 m/h</span>
+        <span>Above alert level, rising at 0.18 m/h</span>
         <small>Sinocalan River - Santa Barbara Bridge Gauge</small>
       </figcaption>
     </figure>
@@ -43,8 +43,8 @@
 
   <section class="auth-form">
     <div class="auth-card">
-      <h2>Mag-sign in</h2>
-      <p class="sub">Ang mga residente at opisyal ng barangay ay gumagamit ng parehong sign-in.</p>
+      <h2>Sign in</h2>
+      <p class="sub">Residents and barangay officials use the same sign-in.</p>
 
       <div id="login-error" class="notice notice-error" role="alert" style="display:none"></div>
 
@@ -57,13 +57,13 @@
           <label for="password">Password</label>
           <div class="pw-wrap">
             <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
-            <button type="button" class="pw-toggle" data-target="password" aria-pressed="false">Ipakita</button>
+            <button type="button" class="pw-toggle" data-target="password" aria-pressed="false">Show</button>
           </div>
         </div>
-        <button class="btn btn-primary btn-block" type="submit">Mag-sign in</button>
+        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
       </form>
 
-      <p class="auth-alt">Bago dito? <a href="register.html">Gumawa ng account</a></p>
+      <p class="auth-alt">New here? <a href="register.html">Create an account</a></p>
     </div>
   </section>
 </main>

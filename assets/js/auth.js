@@ -4,7 +4,7 @@ document.querySelectorAll('.pw-toggle').forEach(function (btn) {
     var input = document.getElementById(btn.dataset.target);
     var show  = input.type === 'password';
     input.type = show ? 'text' : 'password';
-    btn.textContent = show ? 'Itago' : 'Ipakita';
+    btn.textContent = show ? 'Hide' : 'Show';
     btn.setAttribute('aria-pressed', show ? 'true' : 'false');
   });
 });

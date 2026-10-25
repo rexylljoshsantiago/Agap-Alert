@@ -691,6 +691,7 @@
             + '<div>' + T('wind') + '<b>' + (_dataLoaded ? L.w + ' km/h' : '—') + '</b></div>'
             + '<div>' + T('rain') + '<b>' + (_dataLoaded ? L.r + ' mm/h' : '—') + '</b></div>'
             + '<div>' + T('space') + '<b>' + (_dataLoaded ? sp : '—') + '</b></div>'
+            + '<div>Panahon<b id="wx-tile">' + (W ? (WX_FIL[W.weather_condition] || W.weather_condition) + ' · ' + W.temperature.toFixed(1) + '°C' : '—') + '</b></div>'
         + '</div>'
         + '<div id="refresh-bar" style="font-size:12px;color:var(--dim);text-align:right;padding:2px 0 6px">'
             + 'Huling na-refresh: <span id="last-refresh">ngayon</span>'
@@ -766,52 +767,17 @@
   }
 
   function reports() {
-    var O    = off();
-    var rows = S.reps.filter(function (r) { return O || !r.sos; });
-
+    var O = off();
     return '<div class="ph">'
         + '<div>'
-            + '<h1>' + (O ? 'Incident queue' : 'Community reports') + '</h1>'
-            + '<p>' + (O ? 'Every SOS is delivered, whatever its trust level.' : 'Reports from people in your area.') + '</p>'
+            + '<h1>' + (O ? 'Pila ng Insidente' : 'Mga Ulat ng Komunidad') + '</h1>'
+            + '<p>' + (O ? 'Bawat SOS ay naihahatid, anuman ang antas ng tiwala.' : 'Mga ulat mula sa mga tao sa inyong lugar.') + '</p>'
         + '</div>'
-        + '<button class="btn" data-a="rep">' + ic('plus') + 'Report incident</button>'
+        + '<button class="btn" data-a="rep">' + ic('plus') + 'Mag-ulat ng Insidente</button>'
       + '</div>'
-      + '<div class="led">'
-          + rows.map(function (r) {
-              var i = S.reps.indexOf(r);
-              var o = S.open === 'r' + i;
-              return '<div class="r in">'
-                + '<span class="mono dim">' + r.h + '</span>'
-                + '<div>'
-                    + '<b class="t">' + r.t + '</b>'
-                    + '<span class="mute">' + r.w + '</span>'
-                    + (O
-                        ? '<div style="margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">'
-                            + '<span class="tg">' + ic('shield') + TB[r.tr] + '</span>'
-                            + '<span class="tg">' + r.pr + ' priority, '
-                                + (r.tr < 2 && !r.sos && r.pr !== 'High' ? 'call back first' : 'dispatch now')
-                            + '</span>'
-                          + '</div>'
-                        : '')
-                + '</div>'
-                + '<span class="dot" style="--c:var(' + SC[r.st] + ')">' + ST[r.st] + '</span>'
-                + '<div class="ops">'
-                    + (O && r.st < 3
-                        ? '<button class="btn s" data-a="adv" data-v="' + i + '">' + AC[r.st] + '</button>'
-                        : '')
-                    + (r.dt
-                        ? '<button class="btn s o" data-a="open" data-v="r' + i + '" aria-expanded="' + o + '">'
-                            + (o ? 'Hide' : 'Details')
-                          + '</button>'
-                        : '')
-                + '</div>'
-                + (r.dt
-                    ? '<div class="fold' + (o ? ' on' : '') + '"><div><p>'
-                        + r.dt + (r.ppl ? ' ' + r.ppl + ' people, ' + r.dep + '.' : '')
-                      + '</p></div></div>'
-                    : '')
-              + '</div>';
-            }).join('')
+      + '<div class="led" id="reports-led"></div>'
+      + '<div style="text-align:center;padding:12px 0">'
+          + '<button class="btn o" id="load-more-btn" style="display:none" data-a="load-more">Mag-load ng mas marami…</button>'
       + '</div>';
   }
 
@@ -891,6 +857,10 @@
     netbar();
     nav();
     if (S.tab === 'radar') { initMapAfterRender(); bindHydro(); updateWeatherUI(); }
+    if (S.tab === 'reports') {
+      var led = document.getElementById('reports-led');
+      if (led) { _renderReportRows(led); _renderLoadMore(); }
+    }
     document.documentElement.lang = 'fil';
 
     window.scrollTo(0, scrollY);
@@ -1091,6 +1061,14 @@
     pin:   function (v)     { S.sel = S.sel == +v ? null : +v; render(); },
     open:  function (v)     { S.open = S.open === v ? null : v; render(); },
     more:  function ()      { S.more = !S.more; render(); },
+    'load-more': function () {
+      if (_reportPage < _reportPages) {
+        _reportPage++;
+        var btn = document.getElementById('load-more-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Kumukuha…'; }
+        fetchReports(false);
+      }
+    },
     'upd-shelter': function (v) {
       var idx = +v;
       var inp = document.getElementById('socc-' + idx);
@@ -1227,7 +1205,7 @@
         .then(function (data) {
           A.close();
           toast(data.message || (S.net ? 'Ulat naipadala.' : 'Nai-save. Ipapadala kapag may signal.'));
-          if (data.ok) fetchReports();
+          if (data.ok) fetchReports(true);
         })
         .catch(function () { A.close(); toast('Ulat nai-save. Ipapadala kapag may signal.'); });
     },
@@ -1365,6 +1343,11 @@
       factsEls[0].innerHTML = T('wind') + '<b>' + Math.round(W.wind_speed_kmh) + ' km/h ' + dir + '</b>';
       factsEls[1].innerHTML = T('rain') + '<b>' + W.rain_mm.toFixed(1) + ' mm</b>';
     }
+    // Update weather condition tile (index 3)
+    if (factsEls.length >= 4 && W.weather_condition) {
+      var condFil = WX_FIL[W.weather_condition] || W.weather_condition;
+      factsEls[3].innerHTML = 'Panahon<b>' + condFil + ' · ' + W.temperature.toFixed(1) + '°C</b>';
+    }
   }
 
   function compassDir(deg) {
@@ -1372,6 +1355,31 @@
     var dirs = ['N','NE','E','SE','S','SW','W','NW'];
     return dirs[Math.round(deg / 45) % 8];
   }
+
+  // Filipino translations for Open-Meteo weather condition strings
+  var WX_FIL = {
+    'Clear Sky':         'Maliwanag',
+    'Mainly Clear':      'Halos Maliwanag',
+    'Partly Cloudy':     'Bahagyang Maulap',
+    'Overcast':          'Maulap',
+    'Fog':               'Ulap sa Lupa',
+    'Rime Fog':          'Makapal na Ulap',
+    'Light Drizzle':     'Ambon',
+    'Moderate Drizzle':  'Katamtamang Ambon',
+    'Dense Drizzle':     'Makapal na Ambon',
+    'Slight Rain':       'Bahagyang Ulan',
+    'Moderate Rain':     'Katamtamang Ulan',
+    'Heavy Rain':        'Malakas na Ulan',
+    'Slight Snow':       'Bahagyang Niyebe',
+    'Moderate Snow':     'Katamtamang Niyebe',
+    'Heavy Snow':        'Malakas na Niyebe',
+    'Slight Shower':     'Mabilis na Ulan',
+    'Moderate Shower':   'Katamtamang Shower',
+    'Violent Shower':    'Malakas na Shower',
+    'Thunderstorm':      'Kulog at Kidlat',
+    'Thunderstorm + Hail': 'Bagyo at Yelo',
+    'Severe Thunderstorm': 'Malakas na Bagyo'
+  };
 
   /* ── Initial render ──────────────────────────────────────────────────────── */
   /* ── Live data fetch ─────────────────────────────────────────────────────── */
@@ -1432,30 +1440,101 @@
       .catch(function () {});
   }
 
-  function fetchReports() {
-    fetch('api/reports.php', { credentials: 'same-origin' })
+  var _reportPage     = 1;
+  var _reportPages    = 1;
+  var _reportLoading  = false;
+
+  function _mapReport(r) {
+    var stMap = { 'new': 0, 'acknowledged': 1, 'dispatched': 2, 'resolved': 3 };
+    return {
+      id:  r.id,
+      t:   r.title,
+      w:   r.location || r.barangay_name || 'Santa Barbara, Pangasinan',
+      h:   timeAgo(r.created_at),
+      st:  stMap[r.status] !== undefined ? stMap[r.status] : 0,
+      pr:  r.is_sos ? 'Kritikal' : 'Mataas',
+      tr:  1,
+      dt:  r.description || '',
+      sos: r.is_sos ? 1 : 0
+    };
+  }
+
+  function fetchReports(reset) {
+    if (_reportLoading) return;
+    if (reset) { _reportPage = 1; S.reps = []; }
+    _reportLoading = true;
+
+    fetch('api/reports.php?page=' + _reportPage + '&limit=20', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (data) {
+        _reportLoading = false;
         if (!data.ok || !data.reports) return;
-        // Map DB rows into the S.reps format
-        S.reps = data.reports.map(function (r) {
-          var stMap = { 'new': 0, 'acknowledged': 1, 'dispatched': 2, 'resolved': 3 };
-          return {
-            id: r.id,
-            t:  r.title,
-            w:  r.location || r.barangay_name || 'Santa Barbara, Pangasinan',
-            h:  timeAgo(r.created_at),
-            st: stMap[r.status] !== undefined ? stMap[r.status] : 0,
-            pr: r.is_sos ? 'Critical' : 'High',
-            tr: 1,
-            dt: r.description || '',
-            sos: r.is_sos ? 1 : 0
-          };
-        });
-        // Refresh nav badge count
+        var mapped = data.reports.map(_mapReport);
+        if (_reportPage === 1) {
+          S.reps = mapped;
+        } else {
+          // Append new page, avoid duplicates by id
+          var ids = S.reps.map(function (r) { return r.id; });
+          mapped.forEach(function (r) { if (ids.indexOf(r.id) === -1) S.reps.push(r); });
+        }
+        if (data.meta) _reportPages = data.meta.pages || 1;
         nav();
+        // Refresh the reports tab list in place if it's currently visible
+        if (S.tab === 'reports') {
+          var led = document.querySelector('#pg .led');
+          if (led) _renderReportRows(led);
+          _renderLoadMore();
+        }
       })
-      .catch(function () {});
+      .catch(function () { _reportLoading = false; });
+  }
+
+  function _renderReportRows(container) {
+    var O    = off();
+    var rows = S.reps.filter(function (r) { return O || !r.sos; });
+    container.innerHTML = rows.map(function (r) {
+      var i = S.reps.indexOf(r);
+      var o = S.open === 'r' + i;
+      return '<div class="r in">'
+        + '<span class="mono dim">' + r.h + '</span>'
+        + '<div>'
+            + '<b class="t">' + r.t + '</b>'
+            + '<span class="mute">' + r.w + '</span>'
+            + (O
+                ? '<div style="margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">'
+                    + '<span class="tg">' + ic('shield') + TB[r.tr] + '</span>'
+                    + '<span class="tg">' + r.pr + (r.sos ? ' — SOS' : '') + '</span>'
+                  + '</div>'
+                : '')
+        + '</div>'
+        + '<span class="dot" style="--c:var(' + SC[r.st] + ')">' + ST[r.st] + '</span>'
+        + '<div class="ops">'
+            + (O && r.st < 3
+                ? '<button class="btn s" data-a="adv" data-v="' + i + '">' + AC[r.st] + '</button>'
+                : '')
+            + (r.dt
+                ? '<button class="btn s o" data-a="open" data-v="r' + i + '" aria-expanded="' + o + '">'
+                    + (o ? 'Itago' : 'Detalye')
+                  + '</button>'
+                : '')
+        + '</div>'
+        + (r.dt
+            ? '<div class="fold' + (o ? ' on' : '') + '"><div><p>' + r.dt + '</p></div></div>'
+            : '')
+      + '</div>';
+    }).join('') || '<div class="empty" style="padding:2rem;text-align:center;color:var(--dim)">Walang mga ulat.</div>';
+  }
+
+  function _renderLoadMore() {
+    var btn = document.getElementById('load-more-btn');
+    if (!btn) return;
+    if (_reportPage < _reportPages) {
+      btn.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Mag-load ng mas marami…';
+    } else {
+      btn.style.display = 'none';
+    }
   }
 
   function timeAgo(ts) {
@@ -1473,12 +1552,12 @@
   // Fetch live data on load
   fetchFloodLevel();
   fetchShelters();
-  fetchReports();
+  fetchReports(true);
 
   // Refresh flood level every 2 minutes, shelters/reports every 5 minutes
   setInterval(fetchFloodLevel, 2 * 60 * 1000);
   setInterval(fetchShelters,   5 * 60 * 1000);
-  setInterval(fetchReports,    5 * 60 * 1000);
+  setInterval(function () { fetchReports(true); }, 5 * 60 * 1000);
 
   // Fetch live weather on load, then refresh every 10 minutes
   fetchWeather();

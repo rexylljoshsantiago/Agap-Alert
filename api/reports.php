@@ -1,8 +1,8 @@
 <?php
 /**
  * api/reports.php
- * GET  — list reports for the current user's barangay (officials see all; residents see non-SOS)
- * POST — submit a new report or SOS
+ * GET   — list reports (paginated via ?page=N&limit=N)
+ * POST  — submit a new report or SOS
  * PATCH — update report status (officials only)
  */
 require_once __DIR__ . '/bootstrap.php';
@@ -16,33 +16,62 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     $isOfficial = in_array($user['role'], ['official', 'admin'], true);
 
+    $limit  = max(1, min(100, (int) ($_GET['limit'] ?? 30)));
+    $page   = max(1, (int) ($_GET['page']  ?? 1));
+    $offset = ($page - 1) * $limit;
+
     if ($isOfficial) {
-        $rows = $db->query(
+        // Total count for pagination meta
+        $total = (int) $db->query("SELECT COUNT(*) FROM reports")->fetchColumn();
+
+        $stmt = $db->prepare(
             "SELECT r.id, r.title, r.description, r.location, r.status, r.is_sos,
                     r.created_at, u.full_name AS reporter_name, b.name AS barangay_name
              FROM   reports r
              LEFT   JOIN users      u ON u.id = r.user_id
              LEFT   JOIN barangays  b ON b.id = r.barangay_id
              ORDER  BY r.created_at DESC
-             LIMIT  50"
-        )->fetchAll();
+             LIMIT  :lim OFFSET :off"
+        );
+        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
     } else {
         // Residents only see non-SOS reports in their barangay
+        $total = (int) $db->prepare(
+            "SELECT COUNT(*) FROM reports
+             WHERE  is_sos = 0 AND barangay_id = ?"
+        )->execute([$user['barangay_id']]) ? $db->query(
+            "SELECT COUNT(*) FROM reports WHERE is_sos = 0 AND barangay_id = " . (int)$user['barangay_id']
+        )->fetchColumn() : 0;
+
         $stmt = $db->prepare(
             "SELECT r.id, r.title, r.description, r.location, r.status, r.is_sos,
                     r.created_at, b.name AS barangay_name
              FROM   reports r
              LEFT   JOIN barangays b ON b.id = r.barangay_id
-             WHERE  r.is_sos = 0
-               AND  r.barangay_id = ?
+             WHERE  r.is_sos = 0 AND r.barangay_id = :bid
              ORDER  BY r.created_at DESC
-             LIMIT  30"
+             LIMIT  :lim OFFSET :off"
         );
-        $stmt->execute([$user['barangay_id']]);
+        $stmt->bindValue(':bid', (int) $user['barangay_id'], PDO::PARAM_INT);
+        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         $rows = $stmt->fetchAll();
     }
 
-    json_response(['ok' => true, 'reports' => $rows]);
+    json_response([
+        'ok'      => true,
+        'reports' => $rows,
+        'meta'    => [
+            'total'    => (int) $total,
+            'page'     => $page,
+            'limit'    => $limit,
+            'pages'    => (int) ceil($total / $limit),
+        ],
+    ]);
 }
 
 // ── POST — submit report / SOS ────────────────────────────────────────────────

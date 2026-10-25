@@ -343,8 +343,8 @@
     var N  = 25;
     var st = L.rate === 0;
     var vals = [], fc = [];
-    var W  = 340, HH = 132;
-    var xs = W * 0.8;
+    var GW = 340, HH = 132;
+    var xs = GW * 0.8;
 
     var y = function (v) { return 120 - Math.min(v, 10) / 10 * 108; };
 
@@ -363,24 +363,24 @@
       for (var j = 1; j <= 6; j++) fc.push(L.m + L.rate * j);
     }
 
-    H = { vals: vals, fc: fc, xs: xs, W: W };
+    H = { vals: vals, fc: fc, xs: xs, W: GW };
 
     var px = function (i) { return (i / (N - 1) * xs).toFixed(1); };
 
     var d  = 'M' + vals.map(function (v, i) { return px(i) + ' ' + y(v).toFixed(1); }).join('L');
     var fd = fc.length
       ? 'M' + xs + ' ' + y(L.m) + 'L' + fc.map(function (v, j) {
-          return (xs + (W - xs) * (j + 1) / 6).toFixed(1) + ' ' + y(v).toFixed(1);
+          return (xs + (GW - xs) * (j + 1) / 6).toFixed(1) + ' ' + y(v).toFixed(1);
         }).join('L')
       : '';
 
     return (
-      '<svg class="hy" id="hy" viewBox="0 0 ' + W + ' ' + HH + '"'
+      '<svg class="hy" id="hy" viewBox="0 0 ' + GW + ' ' + HH + '"'
         + ' role="img" aria-label="River level over 24 hours with alarm and critical lines">'
-      + '<rect x="0" y="' + y(8) + '" width="' + W + '" height="' + (y(6) - y(8)).toFixed(1) + '" fill="var(--amb)" opacity=".1"/>'
-      + '<rect x="0" y="12" width="' + W + '" height="' + (y(8) - 12).toFixed(1) + '" fill="var(--rose)" opacity=".12"/>'
-      + '<line x1="0" x2="' + W + '" y1="' + y(6) + '" y2="' + y(6) + '" stroke="var(--amb)" stroke-dasharray="3 3"/>'
-      + '<line x1="0" x2="' + W + '" y1="' + y(8) + '" y2="' + y(8) + '" stroke="var(--rose)" stroke-dasharray="3 3"/>'
+      + '<rect x="0" y="' + y(8) + '" width="' + GW + '" height="' + (y(6) - y(8)).toFixed(1) + '" fill="var(--amb)" opacity=".1"/>'
+      + '<rect x="0" y="12" width="' + GW + '" height="' + (y(8) - 12).toFixed(1) + '" fill="var(--rose)" opacity=".12"/>'
+      + '<line x1="0" x2="' + GW + '" y1="' + y(6) + '" y2="' + y(6) + '" stroke="var(--amb)" stroke-dasharray="3 3"/>'
+      + '<line x1="0" x2="' + GW + '" y1="' + y(8) + '" y2="' + y(8) + '" stroke="var(--rose)" stroke-dasharray="3 3"/>'
       + '<text x="3" y="' + (y(6) - 4) + '" fill="var(--amb)" font-size="10">Alarm 6.0 m</text>'
       + '<text x="3" y="' + (y(8) - 4) + '" fill="var(--rose)" font-size="10">Critical 8.0 m</text>'
       + '<path d="' + d + '" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"'

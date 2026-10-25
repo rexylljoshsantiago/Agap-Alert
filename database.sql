@@ -54,6 +54,26 @@ CREATE TABLE shelters (
     FOREIGN KEY (barangay_id) REFERENCES barangays(id) ON DELETE SET NULL
 );
 
+CREATE TABLE weather_readings (
+    id                 INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    barangay_id        INT UNSIGNED NULL,
+    latitude           DECIMAL(9,6)  NOT NULL,
+    longitude          DECIMAL(9,6)  NOT NULL,
+    location_name      VARCHAR(255)  NULL,
+    report_date        DATE          NULL,
+    weather_condition  VARCHAR(60)   NULL,
+    temperature        DECIMAL(5,2)  NULL,
+    temp_class         VARCHAR(20)   NULL,
+    humidity           TINYINT UNSIGNED NULL,
+    rain_mm            DECIMAL(6,2)  NULL,
+    chance_of_rain     TINYINT UNSIGNED NULL,
+    wind_speed_kmh     DECIMAL(6,2)  NULL,
+    wind_direction_deg SMALLINT UNSIGNED NULL,
+    recorded_at        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (barangay_id) REFERENCES barangays(id) ON DELETE SET NULL
+);
+
 CREATE TABLE reports (
     id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id     INT UNSIGNED NULL,

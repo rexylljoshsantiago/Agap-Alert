@@ -1,15 +1,7 @@
-/**
- * app.js — AGAP Alert dashboard logic
- *
- * Handles: auth guard, theme toggle, language switch, map, hydrograph,
- * shelters, reports, hotlines, SOS dialog, publish advisory dialog.
- */
+
 
 (function () {
 
-  /* ── Auth guard ──────────────────────────────────────────────────────────── */
-  // Use localStorage as an instant cache. On every load we also verify the
-  // session with the server in the background and redirect if it has expired.
   var _raw  = localStorage.getItem('agapalert_user');
   var _user = null;
   if (_raw) {
@@ -204,8 +196,6 @@
       ]
     }
   };
-
-  /* ── Static data ─────────────────────────────────────────────────────────── */
 
   // River level data per alert level [0–3]
   var LVD = [
@@ -836,7 +826,7 @@
     $('#pg').innerHTML = views[S.tab]();
     netbar();
     nav();
-    if (S.tab === 'radar') bindHydro();
+    if (S.tab === 'radar') { bindHydro(); updateWeatherUI(); }
     document.documentElement.lang = S.lang === 'fil' ? 'fil' : 'en';
 
     // Sync language toggle pressed state
@@ -1108,6 +1098,77 @@
 
   /* ── Initial render ──────────────────────────────────────────────────────── */
   render();
+
+  // Show flash message left by login / register
+  var _flashRaw = localStorage.getItem('agapalert_flash');
+  if (_flashRaw) {
+    localStorage.removeItem('agapalert_flash');
+    try {
+      var _f = JSON.parse(_flashRaw);
+      toast(_f.message);
+  /* ── Weather fetch ───────────────────────────────────────────────────────── */
+  // Dalongue, Santa Barbara, Pangasinan coordinates
+  var WEATHER_LAT  = 15.9667;
+  var WEATHER_LON  = 120.4167;
+  var WEATHER_BRGID = 1;  // barangay_id for Dalongue
+
+  // Live weather data from API (null until loaded)
+  var W = null;
+
+  function fetchWeather() {
+    var url = 'api/weather.php?lat=' + WEATHER_LAT
+            + '&lon=' + WEATHER_LON
+            + '&barangay_id=' + WEATHER_BRGID;
+
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.ok || !data.weather) return;
+        W = data.weather;
+        updateWeatherUI();
+      })
+      .catch(function () {
+        // Silently fail — UI keeps showing static fallback values
+      });
+  }
+
+  function updateWeatherUI() {
+    if (!W) return;
+
+    // Update facts bar: Wind and Rain
+    var factsEls = document.querySelectorAll('.facts > div');
+    if (factsEls.length >= 2) {
+      // Wind (index 0): convert speed + show direction as compass
+      var dir = compassDir(W.wind_direction_deg);
+      factsEls[0].innerHTML = (S.lang === 'fil' ? 'Hangin' : T('wind'))
+        + '<b>' + Math.round(W.wind_speed_kmh) + ' km/h ' + dir + '</b>';
+
+      // Rain (index 1): rain_mm + chance
+      factsEls[1].innerHTML = (S.lang === 'fil' ? 'Ulan' : T('rain'))
+        + '<b>' + W.rain_mm.toFixed(1) + ' mm</b>';
+    }
+
+    // Update weather condition badge if it exists
+    var condEl = document.getElementById('wx-cond');
+    if (condEl) {
+      condEl.textContent = W.weather_condition
+        + ' · ' + W.temperature.toFixed(1) + '°C'
+        + ' · ' + W.humidity + '% humidity';
+    }
+  }
+
+  function compassDir(deg) {
+    if (deg == null) return '';
+    var dirs = ['N','NE','E','SE','S','SW','W','NW'];
+    return dirs[Math.round(deg / 45) % 8];
+  }
+
+  /* ── Initial render ──────────────────────────────────────────────────────── */
+  render();
+
+  // Fetch live weather on load, then refresh every 10 minutes
+  fetchWeather();
+  setInterval(fetchWeather, 10 * 60 * 1000);
 
   // Show flash message left by login / register
   var _flashRaw = localStorage.getItem('agapalert_flash');

@@ -1089,6 +1089,17 @@
     try { localStorage.setItem('agapalert_theme', dark ? 'dark' : 'light'); } catch (e) {}
   }
 
+  /* ── Theme toggle ────────────────────────────────────────────────────────── */
+  var root     = document.documentElement;
+  var themeBtn = document.getElementById('theme-btn');
+
+  function applyTheme(dark) {
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    themeBtn.innerHTML = '<svg class="i"><use href="#i-' + (dark ? 'sun' : 'moon') + '"/></svg>';
+    themeBtn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    try { localStorage.setItem('agapalert_theme', dark ? 'dark' : 'light'); } catch (e) {}
+  }
+
   var _savedTheme = localStorage.getItem('agapalert_theme');
   applyTheme(_savedTheme ? _savedTheme === 'dark' : true);
 
@@ -1096,20 +1107,10 @@
     applyTheme(root.getAttribute('data-theme') !== 'dark');
   });
 
-  /* ── Initial render ──────────────────────────────────────────────────────── */
-  render();
-
-  // Show flash message left by login / register
-  var _flashRaw = localStorage.getItem('agapalert_flash');
-  if (_flashRaw) {
-    localStorage.removeItem('agapalert_flash');
-    try {
-      var _f = JSON.parse(_flashRaw);
-      toast(_f.message);
   /* ── Weather fetch ───────────────────────────────────────────────────────── */
   // Dalongue, Santa Barbara, Pangasinan coordinates
-  var WEATHER_LAT  = 15.9667;
-  var WEATHER_LON  = 120.4167;
+  var WEATHER_LAT   = 15.9667;
+  var WEATHER_LON   = 120.4167;
   var WEATHER_BRGID = 1;  // barangay_id for Dalongue
 
   // Live weather data from API (null until loaded)
@@ -1127,33 +1128,16 @@
         W = data.weather;
         updateWeatherUI();
       })
-      .catch(function () {
-        // Silently fail — UI keeps showing static fallback values
-      });
+      .catch(function () { /* offline — keep showing static values */ });
   }
 
   function updateWeatherUI() {
     if (!W) return;
-
-    // Update facts bar: Wind and Rain
     var factsEls = document.querySelectorAll('.facts > div');
     if (factsEls.length >= 2) {
-      // Wind (index 0): convert speed + show direction as compass
       var dir = compassDir(W.wind_direction_deg);
-      factsEls[0].innerHTML = (S.lang === 'fil' ? 'Hangin' : T('wind'))
-        + '<b>' + Math.round(W.wind_speed_kmh) + ' km/h ' + dir + '</b>';
-
-      // Rain (index 1): rain_mm + chance
-      factsEls[1].innerHTML = (S.lang === 'fil' ? 'Ulan' : T('rain'))
-        + '<b>' + W.rain_mm.toFixed(1) + ' mm</b>';
-    }
-
-    // Update weather condition badge if it exists
-    var condEl = document.getElementById('wx-cond');
-    if (condEl) {
-      condEl.textContent = W.weather_condition
-        + ' · ' + W.temperature.toFixed(1) + '°C'
-        + ' · ' + W.humidity + '% humidity';
+      factsEls[0].innerHTML = T('wind') + '<b>' + Math.round(W.wind_speed_kmh) + ' km/h ' + dir + '</b>';
+      factsEls[1].innerHTML = T('rain') + '<b>' + W.rain_mm.toFixed(1) + ' mm</b>';
     }
   }
 

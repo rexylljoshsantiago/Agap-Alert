@@ -1263,7 +1263,7 @@
   /* ── Live data fetch ─────────────────────────────────────────────────────── */
 
   var _lastRefresh = null;
-  var _dataLoaded  = false;  // true once first fetch cycle completes
+  var _dataLoaded  = true;  // show data immediately, weather updates asynchronously
 
   function _updateRefreshTime() {
     _lastRefresh = new Date();
@@ -1282,7 +1282,6 @@
         S.lv = lv;
         // Update static LVD with real readings so the hydrograph stays accurate
         _updateRefreshTime();
-        _dataLoaded = true;
         if (f.wind_kmh)     LVD[lv].w = parseFloat(f.wind_kmh);
         if (f.rain_mmh)     LVD[lv].r = parseFloat(f.rain_mmh);
         if (changed && S.tab === 'radar') render();

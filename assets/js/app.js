@@ -271,7 +271,7 @@
     role:    _isOfficial ? 'off' : 'res',
     tab:     'radar',
     net:     1,
-    lang:    'en',
+    lang:    'fil',
     sel:     null,
     route:   null,
     open:    null,
@@ -864,12 +864,7 @@
     netbar();
     nav();
     if (S.tab === 'radar') { initMapAfterRender(); bindHydro(); updateWeatherUI(); }
-    document.documentElement.lang = S.lang === 'fil' ? 'fil' : 'en';
-
-    // Sync language toggle pressed state
-    document.querySelectorAll('#lg button').forEach(function (b) {
-      b.setAttribute('aria-pressed', String(b.dataset.v === S.lang));
-    });
+    document.documentElement.lang = 'fil';
 
     window.scrollTo(0, scrollY);
   }
@@ -1107,12 +1102,6 @@
 
   $('#shade').addEventListener('click', function (e) {
     if (e.target.id === 'shade') A.close();
-  });
-
-  // Language segmented control
-  document.getElementById('lg').addEventListener('click', function (e) {
-    var b = e.target.closest('button');
-    if (b) { S.lang = b.dataset.v; render(); }
   });
 
   /* ── Theme toggle ────────────────────────────────────────────────────────── */

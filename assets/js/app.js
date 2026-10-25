@@ -478,9 +478,11 @@
   }
 
   function initMap() {
-    // Map container must exist in the DOM
     var el = document.getElementById('leaflet-map');
     if (!el || _leafMap) return;
+
+    // Point Leaflet to local marker images
+    L.Icon.Default.imagePath = 'assets/lib/images/';
 
     _leafMap = L.map('leaflet-map', {
       center:    [15.9650, 120.4150],

@@ -566,63 +566,6 @@
     });
   }
 
-  function _drawRoute(shelterIdx) {
-    if (!_leafMap) return;
-
-    // Remove previous route
-    if (_routeLayer) { _leafMap.removeLayer(_routeLayer); _routeLayer = null; }
-
-    var dest = CT_COORDS[shelterIdx];
-    var from = (_userLat !== null)
-      ? [_userLat, _userLon]
-      : MAP_CENTER;
-
-    // OSRM public routing API — free, no key needed
-    var url = 'https://router.project-osrm.org/route/v1/foot/'
-      + from[1] + ',' + from[0] + ';'
-      + dest[1] + ',' + dest[0]
-      + '?overview=full&geometries=geojson';
-
-    fetch(url)
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        if (!data.routes || !data.routes[0]) {
-          // OSRM failed — draw a straight dashed line as fallback
-          _routeLayer = L.polyline([from, dest], {
-            color: '#3b82f6', weight: 4, dashArray: '8 6', opacity: 0.8
-          }).addTo(_leafMap);
-          _leafMap.fitBounds(_routeLayer.getBounds(), { padding: [40, 40] });
-          return;
-        }
-
-        var coords = data.routes[0].geometry.coordinates.map(function (c) {
-          return [c[1], c[0]]; // GeoJSON is [lon, lat], Leaflet wants [lat, lon]
-        });
-
-        var dist = (data.routes[0].distance / 1000).toFixed(2);
-        var mins = Math.round(data.routes[0].duration / 60);
-
-        _routeLayer = L.polyline(coords, {
-          color: '#3b82f6', weight: 5, opacity: 0.85, lineJoin: 'round'
-        }).addTo(_leafMap);
-
-        _routeLayer.bindPopup(
-          '<b>Route to ' + CT[shelterIdx].n + '</b><br>' +
-          dist + ' km · about ' + mins + ' min on foot'
-        ).openPopup();
-
-        _leafMap.fitBounds(_routeLayer.getBounds(), { padding: [50, 50] });
-      })
-      .catch(function () {
-        // No internet — draw straight line
-        _routeLayer = L.polyline([from, dest], {
-          color: '#3b82f6', weight: 4, dashArray: '8 6', opacity: 0.8
-        }).addTo(_leafMap);
-        _leafMap.fitBounds(_routeLayer.getBounds(), { padding: [40, 40] });
-        toast('Offline — showing straight-line route.');
-      });
-  }
-
   function map() {
     return '<div class="map">'
       + '<div id="leaflet-map"></div>'
@@ -658,8 +601,8 @@
 
       if (_leafMap) {
         _leafMap.remove();
-        _leafMap          = null;
-        _userMarker       = null;
+        _leafMap      = null;
+        _userMarker   = null;
         _shelterMarkers   = [];
         _floodLayer       = null;
         _incidentMarkers  = [];
@@ -1085,15 +1028,7 @@
   /* ── Action handlers ─────────────────────────────────────────────────────── */
   var A = {
     tab:   function (v)     { if (v === 'admin') { window.location.href = 'admin.html'; return; } S.tab = v; render(); },
-    route: function (v) {
-      var idx = +v;
-      // Switch to radar tab so the map is visible
-      if (S.tab !== 'radar') { S.tab = 'radar'; render(); }
-      S.route = idx;
-      // Draw on Leaflet map — initMapAfterRender may still be running, so use a small delay
-      setTimeout(function () { _drawRoute(idx); }, 200);
-      toast('Drawing route to ' + CT[idx].n + '…');
-    },
+    route: function (v)     { S.tab = 'radar'; S.sel = +v; S.route = +v; render(); toast('Route to ' + CT[v].n + ', about ' + walk(CT[v]) + ' min on foot'); },
     pin:   function (v)     { S.sel = S.sel == +v ? null : +v; render(); },
     open:  function (v)     { S.open = S.open === v ? null : v; render(); },
     more:  function ()      { S.more = !S.more; render(); },

@@ -281,8 +281,6 @@
     inc:     1,
     pubLv:   2,
     pubC:    0,
-    userLat: null,   // real GPS latitude  (null = not yet granted)
-    userLon: null,   // real GPS longitude
     reps: [
       {
         t: '3 families stranded near Sinocalan River dike',
@@ -449,13 +447,16 @@
   }
 
   /* ── Leaflet map ─────────────────────────────────────────────────────────── */
-  var _leafMap      = null;   // Leaflet map instance
-  var _userMarker   = null;   // blue dot marker
-  var _shelterMarkers = [];   // evacuation center markers
-  var _floodLayer   = null;   // flood polygon layer
-  var _incidentMarkers = [];  // incident markers (officials only)
+  var _leafMap         = null;
+  var _shelterMarkers  = [];
+  var _floodLayer      = null;
+  var _incidentMarkers = [];
 
-  // Real-world coordinates for evacuation centers (Dalongue area)
+  // Dalongue, Santa Barbara — fixed map center
+  var MAP_CENTER = [15.9650, 120.4150];
+  var MAP_ZOOM   = 15;
+
+  // Real-world coordinates for evacuation centers
   var CT_COORDS = [
     [15.9640, 120.4140],  // Dalongue Barangay Evacuation Hall
     [15.9610, 120.4110],  // Santa Barbara Multi-Purpose Gymnasium
@@ -463,7 +464,7 @@
     [15.9590, 120.4220]   // Minien National High School Shelter
   ];
 
-  // Approximate flood zone polygon around Sinocalan River (Dalongue)
+  // Flood zone polygon along Sinocalan River (Dalongue)
   var FLOOD_ZONE = [
     [15.9680, 120.4100], [15.9690, 120.4150], [15.9670, 120.4190],
     [15.9650, 120.4210], [15.9620, 120.4200], [15.9600, 120.4170],
@@ -481,31 +482,21 @@
     var el = document.getElementById('leaflet-map');
     if (!el || _leafMap) return;
 
-    // Point Leaflet to local marker images
     L.Icon.Default.imagePath = 'assets/lib/images/';
 
     _leafMap = L.map('leaflet-map', {
-      center:    [15.9650, 120.4150],
-      zoom:      15,
-      zoomControl: false   // we use our own buttons
+      center:      MAP_CENTER,
+      zoom:        MAP_ZOOM,
+      zoomControl: false
     });
 
-    // OpenStreetMap tiles — free, no key needed
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19
     }).addTo(_leafMap);
 
-    // Flood zone polygon
     _updateFloodLayer();
-
-    // Evacuation center markers
     _updateShelterMarkers();
-
-    // If we already have user location, add the dot
-    if (S.userLat !== null) _updateUserMarker();
-
-    // Incident markers (officials)
     if (off()) _updateIncidentMarkers();
   }
 
@@ -515,11 +506,7 @@
     if (!S.fl || S.lv === 0) return;
     var c = floodColor();
     _floodLayer = L.polygon(FLOOD_ZONE, {
-      color:       c,
-      fillColor:   c,
-      fillOpacity: 0.25,
-      weight:      2,
-      dashArray:   '6 4'
+      color: c, fillColor: c, fillOpacity: 0.25, weight: 2, dashArray: '6 4'
     }).addTo(_leafMap);
     _floodLayer.bindTooltip('Flood zone – Sinocalan River', { sticky: true });
   }
@@ -531,41 +518,25 @@
 
     var shelterIcon = L.divIcon({
       className: '',
-      html: '<div style="width:28px;height:28px;border-radius:50%;background:var(--ac,#2563eb);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">S</div>',
-      iconSize:   [28, 28],
-      iconAnchor: [14, 14]
+      html: '<div style="width:28px;height:28px;border-radius:50%;background:#2563eb;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">S</div>',
+      iconSize: [28, 28], iconAnchor: [14, 14]
     });
 
     CT.forEach(function (c, i) {
-      var coords = CT_COORDS[i];
-      var cap    = c.c - c.o;
-      var pct    = Math.round(c.o / c.c * 100);
-      var m = L.marker(coords, { icon: shelterIcon })
+      var cap = c.c - c.o;
+      var pct = Math.round(c.o / c.c * 100);
+      var col = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e';
+      var m = L.marker(CT_COORDS[i], { icon: shelterIcon })
         .addTo(_leafMap)
         .bindPopup(
           '<b>' + (i + 1) + '. ' + c.n + '</b><br>' +
           c.b + '<br>' +
-          c.k + ' km away · ' + walk(c) + ' min walk<br>' +
-          '<span style="color:' + (pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e') + '">' +
-          cap + ' places left (' + pct + '% full)</span>' +
+          c.k + ' km · ' + walk(c) + ' min walk<br>' +
+          '<span style="color:' + col + '">' + cap + ' places left (' + pct + '% full)</span>' +
           (c.p ? '<br>📞 ' + c.p : '')
         );
       _shelterMarkers.push(m);
     });
-  }
-
-  function _updateUserMarker() {
-    if (!_leafMap || S.userLat === null) return;
-    if (_userMarker) { _leafMap.removeLayer(_userMarker); }
-    var userIcon = L.divIcon({
-      className: '',
-      html: '<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 6px rgba(59,130,246,.25)"></div>',
-      iconSize:   [18, 18],
-      iconAnchor: [9, 9]
-    });
-    _userMarker = L.marker([S.userLat, S.userLon], { icon: userIcon, zIndexOffset: 1000 })
-      .addTo(_leafMap)
-      .bindPopup('<b>Your location</b>');
   }
 
   function _updateIncidentMarkers() {
@@ -577,15 +548,13 @@
     var incIcon = L.divIcon({
       className: '',
       html: '<div style="width:16px;height:16px;background:#ef4444;transform:rotate(45deg);border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.4)"></div>',
-      iconSize:   [16, 16],
-      iconAnchor: [8, 8]
+      iconSize: [16, 16], iconAnchor: [8, 8]
     });
 
-    S.reps.filter(function (r) { return r.st < 3; }).forEach(function (r) {
-      // Approximate positions near the area (static demo data has no real coords)
-      var baseCoords = [15.9645 + (Math.random() - 0.5) * 0.005,
-                        120.4145 + (Math.random() - 0.5) * 0.005];
-      var m = L.marker(baseCoords, { icon: incIcon })
+    S.reps.filter(function (r) { return r.st < 3; }).forEach(function (r, idx) {
+      var lat = MAP_CENTER[0] + (idx % 3 - 1) * 0.003;
+      var lon = MAP_CENTER[1] + (Math.floor(idx / 3) - 0.5) * 0.003;
+      var m = L.marker([lat, lon], { icon: incIcon })
         .addTo(_leafMap)
         .bindPopup('<b>' + r.pr + ' priority</b><br>' + r.t + '<br><small>' + r.w + '</small>');
       _incidentMarkers.push(m);
@@ -1056,9 +1025,9 @@
     open:  function (v)     { S.open = S.open === v ? null : v; render(); },
     more:  function ()      { S.more = !S.more; render(); },
     adv:   function (v)     { var r = S.reps[v]; if (r.st < 3) r.st++; render(); },
-    zin:   function ()      { if (_leafMap) _leafMap.zoomIn();  },
+    zin:   function ()      { if (_leafMap) _leafMap.zoomIn(); },
     zout:  function ()      { if (_leafMap) _leafMap.zoomOut(); },
-    zr:    function ()      { requestLocation(); if (_leafMap && S.userLat !== null) { _leafMap.setView([S.userLat, S.userLon], 16); } else if (_leafMap) { _leafMap.setView([15.9650, 120.4150], 15); } },
+    zr:    function ()      { if (_leafMap) _leafMap.setView(MAP_CENTER, MAP_ZOOM); },
     lfl:   function ()      { S.fl  = !S.fl;  _updateFloodLayer(); var b = document.querySelector('[data-a="lfl"]'); if(b) b.setAttribute('aria-pressed', String(S.fl)); },
     linc:  function ()      { S.inc = !S.inc; if(off()) _updateIncidentMarkers(); var b = document.querySelector('[data-a="linc"]'); if(b) b.setAttribute('aria-pressed', String(S.inc)); },
     toast: function (v)     { toast(v); },
@@ -1167,27 +1136,6 @@
     applyTheme(root.getAttribute('data-theme') !== 'dark');
   });
 
-  /* ── Geolocation ─────────────────────────────────────────────────────────── */  function requestLocation() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        S.userLat = pos.coords.latitude;
-        S.userLon = pos.coords.longitude;
-        S.userSVG = null; // no longer used
-        // Update Leaflet map
-        if (_leafMap) {
-          _leafMap.setView([S.userLat, S.userLon], 16);
-          _updateUserMarker();
-        }
-        // Re-fetch weather using user's actual position
-        fetchWeather();
-        toast('Location found — map updated to your position.');
-      },
-      function () { /* denied or unavailable — stay at default */ },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }
-
   /* ── Weather fetch ───────────────────────────────────────────────────────── */
   // Dalongue, Santa Barbara, Pangasinan coordinates
   var WEATHER_LAT   = 15.9667;
@@ -1198,10 +1146,8 @@
   var W = null;
 
   function fetchWeather() {
-    var lat = S.userLat !== null ? S.userLat : WEATHER_LAT;
-    var lon = S.userLon !== null ? S.userLon : WEATHER_LON;
-    var url = 'api/weather.php?lat=' + lat
-            + '&lon=' + lon
+    var url = 'api/weather.php?lat=' + WEATHER_LAT
+            + '&lon=' + WEATHER_LON
             + '&barangay_id=' + WEATHER_BRGID;
 
     fetch(url, { credentials: 'same-origin' })
@@ -1232,9 +1178,6 @@
 
   /* ── Initial render ──────────────────────────────────────────────────────── */
   render();
-
-  // Request user location — browser will prompt allow/deny
-  requestLocation();
 
   // Fetch live weather on load, then refresh every 10 minutes
   fetchWeather();

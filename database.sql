@@ -112,3 +112,10 @@ INSERT INTO shelters (name, barangay_id, capacity, occupancy, contact) VALUES
     ('Santa Barbara Multi-Purpose Gymnasium',  2, 350, 0,   '0917-508-1122'),
     ('Tuliao Disaster Evacuation Center',      3, 220, 0,   NULL),
     ('Minien National High School Shelter',    NULL, 200, 0, NULL);
+
+CREATE TABLE login_attempts (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ip         VARCHAR(45)  NOT NULL,
+    attempted_at TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ip_time (ip, attempted_at)
+);

@@ -34,7 +34,7 @@ document.getElementById('login-form').addEventListener('submit', function (e) {
     headers:     { 'Content-Type': 'application/json' },
     body:        JSON.stringify({ email: email, password: password }),
   })
-    .then(function (res) { return res.json(); })
+    .then(function (res) { return res.json().then(function(d){ d._status = res.status; return d; }); })
     .then(function (data) {
       if (!data.ok) {
         showError(data.error || 'Mali ang email o password.');

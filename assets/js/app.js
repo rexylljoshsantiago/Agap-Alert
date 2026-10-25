@@ -314,6 +314,14 @@
   var tt;        // toast timer
 
   function T(k) {
+    // These four keys use the current time rather than a hardcoded value
+    var t = nowHHMM();
+    if (k === 'upd')    return S.lang === 'fil' ? 'Na-update ' + t : 'Updated ' + t;
+    if (k === 'saved')  return S.lang === 'fil' ? 'Na-save ' + t   : 'Saved ' + t;
+    if (k === 'issuer') return 'MDRRMO Santa Barbara, ' + t;
+    if (k === 'off2')   return S.lang === 'fil'
+      ? 'Ipinapakita ang impormasyong na-save noong ' + t + '. Maaaring luma na ang mga numero.'
+      : 'Showing information saved at ' + t + '. Numbers may be out of date.';
     return D[S.lang][k] != null ? D[S.lang][k] : D.en[k];
   }
 
@@ -334,8 +342,14 @@
   }
 
   function clk(h) {
-    var m = (14 * 60 + 5 - Math.round(h * 60) + 1440) % 1440;
+    var base = new Date();
+    var m = (base.getHours() * 60 + base.getMinutes() - Math.round(h * 60) + 1440) % 1440;
     return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2);
+  }
+
+  function nowHHMM() {
+    var d = new Date();
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
   }
 
   /* ── Hydrograph ──────────────────────────────────────────────────────────── */
@@ -1000,7 +1014,7 @@
             : 'Nai-save nang lokal — ipapadala kapag may koneksyon.';
         }
         // Refresh reports list for officials
-        fetchReports();
+        fetchReports(true);
       })
       .catch(function () {
         var refEl = $('#sos-ref');
@@ -1390,7 +1404,7 @@
   function _updateRefreshTime() {
     _lastRefresh = new Date();
     var el = document.getElementById('last-refresh');
-    if (el) el.textContent = _lastRefresh.toLocaleTimeString('fil-PH', { hour: '2-digit', minute: '2-digit' });
+    if (el) el.textContent = nowHHMM();
   }
 
   function fetchFloodLevel() {

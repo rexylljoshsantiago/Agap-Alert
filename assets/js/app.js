@@ -591,12 +591,12 @@
   }
 
   function map() {
-    return '<div class="map" style="position:relative">'
-      + '<div id="leaflet-map" style="width:100%;height:420px;border-radius:12px;z-index:0"></div>'
-      + '<span class="tag mono' + (S.net ? '' : ' old') + '" style="position:absolute;bottom:8px;left:8px;z-index:1000">'
+    return '<div class="map">'
+      + '<div id="leaflet-map"></div>'
+      + '<span class="tag mono' + (S.net ? '' : ' old') + '">'
           + (S.net ? T('upd') : T('saved'))
       + '</span>'
-      + '<div class="lyr" style="position:absolute;top:8px;left:8px;z-index:1000">'
+      + '<div class="lyr">'
           + '<button data-a="lfl" aria-pressed="' + (S.fl ? 'true' : 'false') + '">'
               + '<i style="background:' + floodColor() + ';opacity:.7"></i>'
               + T('l_flood')
@@ -608,7 +608,7 @@
                 + '</button>'
               : '')
       + '</div>'
-      + '<div class="zm" style="position:absolute;top:8px;right:8px;z-index:1000">'
+      + '<div class="zm">'
           + '<button data-a="zin"  aria-label="Zoom in">'  + ic('plus')  + '</button>'
           + '<button data-a="zout" aria-label="Zoom out">' + ic('minus') + '</button>'
           + '<button data-a="zr"   aria-label="Center on my location">' + ic('loc') + '</button>'
@@ -619,17 +619,22 @@
   // Called after map() HTML is injected into the DOM
   function initMapAfterRender() {
     if (S.tab !== 'radar') return;
-    // Small delay so the div is fully painted before Leaflet measures it
     setTimeout(function () {
-      if (!_leafMap) {
-        initMap();
-      } else {
-        // Map already exists — just invalidate size and update layers
-        _leafMap.invalidateSize();
-        _updateFloodLayer();
-        if (off()) _updateIncidentMarkers();
+      var el = document.getElementById('leaflet-map');
+      if (!el) return;
+
+      // If map exists but container was re-created by render(), destroy and reinit
+      if (_leafMap) {
+        _leafMap.remove();
+        _leafMap = null;
+        _userMarker = null;
+        _shelterMarkers = [];
+        _floodLayer = null;
+        _incidentMarkers = [];
       }
-    }, 50);
+
+      initMap();
+    }, 100);
   }
 
   /* ── Capacity bar ────────────────────────────────────────────────────────── */

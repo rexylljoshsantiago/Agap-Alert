@@ -156,7 +156,7 @@ a:hover { text-decoration: underline; }
 
 /* ── Right / form panel ──────────────────────────────────────────────────────── */
 .auth-form {
-  padding: clamp(2rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4.5rem);
+  padding: clamp(2.5rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4.5rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -592,6 +592,16 @@ select.input optgroup {
 @media (max-width: 520px) {
   .row-2 { grid-template-columns: 1fr; }
   .auth-form { padding: 2rem 1.25rem; }
+  .auth-card { max-width: 520px; }
+}
+
+@media (max-width: 520px) {
+  .auth-brand { padding: 1.5rem 1.25rem; }
+  .auth-brand h1 { font-size: 21px; line-height: 1.18; }
+  .auth-form { min-height: calc(100dvh - 145px); padding: 2rem 1.25rem 2.5rem; }
+  .auth-card h2 { font-size: 27px; }
+  .input, select.input { min-height: 44px; font-size: 16px; }
+  .btn-block { min-height: 46px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

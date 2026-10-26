@@ -234,6 +234,8 @@ svg.i {
   min-height: 62px;
 }
 
+.hi > * { min-width: 0; }
+
 .brand {
   display: flex;
   align-items: center;
@@ -257,6 +259,7 @@ svg.i {
   display: flex;
   gap: 4px;
   flex: 1;
+  min-width: 0;
 }
 
 .tabs button {
@@ -698,12 +701,6 @@ svg.i {
 @keyframes skeleton-pulse {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
-}
-}
-  font-family: "IBM Plex Mono", monospace;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 1px;
 }
 
 .old { opacity: 0.5; }
@@ -1282,7 +1279,7 @@ textarea.fi { min-height: 88px; resize: vertical; }
   .cols { grid-template-columns: 1fr; gap: 28px; }
 }
 
-@media (max-width: 899px) {
+@media (max-width: 1024px) {
   body {
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
@@ -1403,6 +1400,38 @@ textarea.fi { min-height: 88px; resize: vertical; }
   }
 
   .toast { left: 16px; bottom: 90px; }
+}
+
+@media (max-width: 640px) {
+  .pg { padding: 18px 14px 88px; }
+  .hi { padding: 0 14px; }
+  .brand { font-size: 16px; }
+  .brand img { width: 30px; height: 30px; }
+  .theme-btn { width: 38px; height: 38px; }
+
+  .ph { margin-bottom: 20px; gap: 14px; }
+  .ph h1 { font-size: 23px; }
+  .ph p { font-size: 13.5px; }
+  .facts { width: 100%; }
+  .facts div { flex: 1 1 88px; min-width: 0; }
+
+  .band .bi { padding-top: 14px; padding-bottom: 14px; }
+  .band h2 { font-size: 17px; }
+  .map { height: clamp(320px, 58dvh, 440px); }
+  .tag { max-width: calc(100% - 24px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lyr { position: static; max-width: none; justify-content: flex-start; padding: 10px 0 0; }
+  .zm { bottom: 10px; right: 10px; }
+  .zm button { width: 36px; height: 36px; }
+
+  .read { font-size: 42px; }
+  .read small { font-size: 18px; }
+  .sh, .in { grid-template-columns: 1fr; gap: 8px; }
+  .sh > *, .in > * { grid-column: auto !important; order: initial !important; }
+  .led .r { padding: 14px 0; }
+  .ops { justify-content: flex-start; }
+  .tel { font-size: 20px; }
+  .rw { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .toast { right: 14px; left: 14px; max-width: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

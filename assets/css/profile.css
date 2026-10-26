@@ -287,7 +287,13 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 520px) {
+  .profile-wrap { padding: 1.25rem 1rem calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+  .profile-back { margin-bottom: 1.25rem; }
   .row-2 { grid-template-columns: 1fr; }
-  .avatar-card { flex-direction: column; text-align: center; }
+  .avatar-card { flex-direction: column; text-align: center; padding: 1.25rem; }
+  .form-card-head, .form-card-body, .pf-actions { padding-left: 1rem; padding-right: 1rem; }
   .pf-actions { flex-wrap: wrap; }
+  .pf-actions .pf-btn { flex: 1 1 100%; min-height: 44px; }
+  .pf-save-status { width: 100%; text-align: center; }
+  .pf-input { min-height: 44px; font-size: 16px; }
 }

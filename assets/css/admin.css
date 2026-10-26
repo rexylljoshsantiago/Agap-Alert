@@ -427,7 +427,7 @@ select.gen-input {
   cursor: pointer;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 1024px) {
   /* Keep the main navigation visible in the admin panel, matching the
      compact horizontal tab bar used in the supplied layout. */
   .admin-wrap .hd {
@@ -475,4 +475,37 @@ select.gen-input {
     font-size: 10px;
     padding: 6px 2px;
   }
+}
+
+@media (max-width: 640px) {
+  .admin-main {
+    padding: 1.25rem 1rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    gap: 1.25rem;
+  }
+
+  .admin-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .admin-tab { flex: 0 0 auto; padding: 0.7rem 1rem; }
+
+  .admin-section-head { align-items: flex-start; flex-direction: column; padding: 1rem; }
+  .gen-form { padding: 1rem; }
+  .gen-form > *, .gen-form .field { min-width: 100% !important; }
+  .gen-btn { width: 100%; min-height: 44px; }
+
+  #panel-codes .admin-section { overflow: visible; }
+  #panel-codes .code-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+  .code-table th, .code-table td { padding-left: 1rem; padding-right: 1rem; }
+
+  .approval-row, .officials-row { align-items: flex-start; padding: 0.9rem 1rem; }
+  .approval-row { flex-wrap: wrap; }
+  .approval-actions { width: 100%; }
+  .approval-actions button { flex: 1; min-height: 38px; }
+  .officials-row { flex-wrap: wrap; }
+  .officials-info { min-width: calc(100% - 52px); }
+  .btn-revoke { width: 100%; min-height: 38px; }
+  .toast-bar { bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 2rem); white-space: normal; text-align: center; }
 }
